@@ -1,0 +1,10 @@
+{
+  "maxDurationMs": 120000,
+  "players": [{
+    "name": "PlayerA",
+    "logic": "targetSpeed = 100;"
+  }, {
+    "name": "PlayerB",
+    "logic": "targetAngle = targetAngle + relativeAngles[0];\n targetSpeed = 150;\n if (distances[0] < 150) { shoot = true; }; throw Error('')"
+  }]
+}

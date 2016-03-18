@@ -1,4 +1,5 @@
-var utils = require('./utils.js')
+var utils = require('./utils.js');
+var vm = require('vm');
 
 var ObjectType = {
   UNKNOWN: 'UNKNOWN',
@@ -57,7 +58,8 @@ Rocket.prototype._typeId = ObjectType.ROCKET;
 
 Ship = function(positionX, positionY, angle, logic, faction) {
   SimulationObject.call(this, positionX, positionY, angle, /*speed=*/0, faction);
-  this._logic = logic;
+  this._logic = new vm.Script(logic, { displayErrors: true, filename: 'ai.js' });
+  this._context = new vm.createContext({ initialized: false });
   this._modules = {};
 };
 Ship.prototype = Object.create(SimulationObject.prototype);
@@ -82,9 +84,12 @@ Ship.prototype.registerModule = function(name, module) {
 Ship.prototype.reconfigure = function() {
   var env = this._getInnerProperties();
 
-  eval(this._logic);
+  utils.ExtendDict(this._context, env)
+  this._logic.runInContext(this._context);
+  this._context.initialized = true;
+ 
   for (var module_name in this._modules) {
-    this._modules[module_name].loadProperties(env);
+    this._modules[module_name].loadProperties(this._context);
   }
 };
 
@@ -146,7 +151,7 @@ EngineModule.prototype._throttledChange = function(time_delta, change_speed, des
 var WeaponModule = function(simulation) {
   ShipModule.call(this);
   this._simulation = simulation;
-  this._time_since_last_shot = Number.MAX_SAFE_INTEGER;
+  this._time_since_last_shot = utils.MAX_SAFE_INTEGER;
   this._reload_time = 1000;
 };
 WeaponModule.prototype = Object.create(ShipModule.prototype);

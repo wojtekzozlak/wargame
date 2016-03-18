@@ -1,3 +1,5 @@
+const MAX_SAFE_INTEGER = Math.pow(2, 53); 
+
 var AbstractMethod = function() {
   throw 'Not Implemented!';
 };
@@ -19,13 +21,31 @@ var ObjectKeys = function(obj) {
 
 var ExtendDict = function(a, b) {
   for (var attr in b) {
-  	a[attr] = b[attr];
+    a[attr] = b[attr];
   }
 }
+
+var SuccessOrErrorValue = function(error_value) {
+  this.ok = (error_value == undefined);
+  if (!this.ok) {
+    this.error_value = error_value;
+  }
+};
+
+var Success = function() {
+  SuccessOrErrorValue.call(this);
+};
+
+var ErrorValue = function(error_value) {
+  SuccessOrErrorValue.call(this, error_value);
+};
 
 module.exports = {
   ABSTRACT_METHOD: AbstractMethod,
   ExtendDict: ExtendDict,
+  MAX_SAFE_INTEGER: MAX_SAFE_INTEGER,
   ObjectKeys: ObjectKeys,
-  RotateVector: RotateVector
+  RotateVector: RotateVector,
+  Success: Success,
+  ErrorValue: ErrorValue
 };

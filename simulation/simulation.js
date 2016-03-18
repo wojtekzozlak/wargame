@@ -10,10 +10,15 @@ Simulation.prototype.addObject = function(object) {
 
 Simulation.prototype.computeStep = function(time_delta) {
   for (var i = 0; i < this._objects.length; ++i) {
-    this._objects[i].reconfigure();
+    try {
+      this._objects[i].reconfigure();
+    } catch (e) {
+      return new utils.ErrorValue(e.stack);
+    }
     this._objects[i].computeStep(time_delta);
   }
   this._detectCollisions();
+  return new utils.Success();
 };
 
 Simulation.prototype._detectCollisions = function() {
