@@ -25,6 +25,10 @@ var ExtendDict = function(a, b) {
   }
 }
 
+var SanitizeTrace = function(stacktrace) {
+  return stacktrace.substr(0, stacktrace.indexOf('at Script')).trim();
+};
+
 var SuccessOrErrorValue = function(error_value) {
   this.ok = (error_value == undefined);
   if (!this.ok) {
@@ -46,6 +50,7 @@ module.exports = {
   MAX_SAFE_INTEGER: MAX_SAFE_INTEGER,
   ObjectKeys: ObjectKeys,
   RotateVector: RotateVector,
+  SanitizeTrace: SanitizeTrace,
   Success: Success,
   ErrorValue: ErrorValue
 };

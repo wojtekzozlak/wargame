@@ -5,6 +5,7 @@ var utils = require('./utils.js')
 
 var FPS = 50;
 var DELTA_PER_FRAME = 1000 / FPS;
+var RECONFIGURE_EVERY_MS = 100;
 
 
 var ReadInput = function(callback) {
@@ -19,15 +20,15 @@ var ReadInput = function(callback) {
     lines.push(cmd);
   });
 
-  rl.on('close', function(cmd) {
+  rl.on('close', function() {
     var input = lines.join('\n');
+console.error('input: ' + input);
     callback(JSON.parse(input));
-    
   });
 };
 
 
-var RunSimulation = function(data) {
+var RunSimulation = function (data) {
   var sim = new simulation.Simulation();
   for (var i = 0; i < data.players.length; ++i) {
     var player = data.players[i];
@@ -36,17 +37,43 @@ var RunSimulation = function(data) {
     ship.registerModule("weapons", new model.WeaponModule(sim));
     ship.registerModule("sensors", new model.SensorModule(sim));
     sim.addObject(ship);
-
   }
 
-  for (var elapsed = 0; !sim.finished() && elapsed < data.maxDurationMs; elapsed += DELTA_PER_FRAME) {
-    var result = sim.computeStep(DELTA_PER_FRAME);
-    if (!result.ok) {
-      console.log(result.error_value);
-      return;
+  var output = [];
+
+  var error = null;
+  for (var elapsed = 0, since_last_reconfiguration = RECONFIGURE_EVERY_MS;
+       !sim.finished() && elapsed < data.maxDurationMs;
+       elapsed += DELTA_PER_FRAME, since_last_reconfiguration += DELTA_PER_FRAME) {
+    if (since_last_reconfiguration >= RECONFIGURE_EVERY_MS) {
+      var result = sim.reconfigureObjects(); 
+      if (!result.ok) {
+        error = result.error_value;
+        break;
+      }
+      since_last_reconfiguration = 0;
     }
-    console.log(JSON.stringify(sim.dumpFrame()));
+
+    sim.computeStep(DELTA_PER_FRAME)
+    output.push({
+      type: 'FRAME',
+      contents: sim.dumpFrame()
+    });
   }
+  var result = { type: 'OUTCOME' };
+  if (error) {
+    result.outcome = 'ERROR';
+    result.faction = error.faction;
+    result.stack = error.stack;
+  } else if(sim.finished()) {
+    result.outcome = 'WINNER';
+    result.faction = sim.factionsAlive()[0];
+  } else {
+    result.outcome = 'TIE';
+  }
+  output.push(result);
+
+  console.log(JSON.stringify(output));
 };
 
 ReadInput(RunSimulation);

@@ -8,17 +8,26 @@ Simulation.prototype.addObject = function(object) {
   this._objects.push(object);
 };
 
-Simulation.prototype.computeStep = function(time_delta) {
+Simulation.prototype.reconfigureObjects = function() {
   for (var i = 0; i < this._objects.length; ++i) {
     try {
       this._objects[i].reconfigure();
     } catch (e) {
-      return new utils.ErrorValue(e.stack);
+      err = {
+        faction: this._objects[i].getProperties().faction,
+        stack: utils.SanitizeTrace(e.stack)
+      }
+      return new utils.ErrorValue(err);
     }
+  }
+  return new utils.Success();
+};
+
+Simulation.prototype.computeStep = function(time_delta) {
+  for (var i = 0; i < this._objects.length; ++i) {
     this._objects[i].computeStep(time_delta);
   }
   this._detectCollisions();
-  return new utils.Success();
 };
 
 Simulation.prototype._detectCollisions = function() {
@@ -45,7 +54,7 @@ Simulation.prototype._detectCollisions = function() {
   this._objects = remaining_objects;
 };
 
-Simulation.prototype._factionsAlive = function() {
+Simulation.prototype.factionsAlive = function() {
   var factions_alive = {};
   for (var i = 0; i < this._objects.length; ++i) {
     var obj_faction = this._objects[i].getProperties().faction;
@@ -57,7 +66,7 @@ Simulation.prototype._factionsAlive = function() {
 };
 
 Simulation.prototype.finished = function() {
-  return this._factionsAlive().length <= 1;
+  return this.factionsAlive().length <= 1;
 };
 
 Simulation.prototype.dumpFrame = function() {
