@@ -32,7 +32,7 @@ class ServerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     self.send_response(404)
     self.end_headers()
     with open('index.html', 'r') as f:
-      contents = '\n'.join(f.readlines())
+      contents = ''.join(f.readlines())
       self.wfile.write(contents)
     self.wfile.close()
 

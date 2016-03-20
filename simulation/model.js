@@ -8,6 +8,15 @@ var ObjectType = {
 };
 
 
+var NormalizeRelativeAngle = function(relative_angle) {
+  relative_angle  = (relative_angle + 360) % 360;
+  if (relative_angle < 180) {
+    return relative_angle;
+  } else {
+    return relative_angle - 360;
+  }
+};
+
 var SimulationObject = function(positionX, positionY, angle, speed, faction) {
   this._positionX = positionX;
   this._positionY = positionY;
@@ -60,6 +69,7 @@ Ship = function(positionX, positionY, angle, logic, faction) {
   SimulationObject.call(this, positionX, positionY, angle, /*speed=*/0, faction);
   this._logic = new vm.Script(logic, { displayErrors: true, filename: 'ai.js' });
   this._context = new vm.createContext({ initialized: false });
+  this._context['messages'] = [];
   this._modules = {};
 };
 Ship.prototype = Object.create(SimulationObject.prototype);
@@ -91,6 +101,10 @@ Ship.prototype.reconfigure = function() {
   for (var module_name in this._modules) {
     this._modules[module_name].loadProperties(this._context);
   }
+  for (var i = 0; i < this._context['messages'].length; ++i) {
+    this._emitMessage(this._context['messages'][i]);
+  }
+  this._context['messages'] = [];
 };
 
 
@@ -135,7 +149,10 @@ EngineModule.prototype.computeStep = function(time_delta) {
   this._adjustAngle(time_delta);
 };
 EngineModule.prototype._adjustAngle = function(time_delta) {
-  var desired_angle_change = this._targetAngle - this._ship._angle;
+  var desired_angle_change = NormalizeRelativeAngle(this._targetAngle - this._ship._angle);
+  if (desired_angle_change > 180) {
+    desired_angle_change -= 360;
+  }
   this._ship._angle += this._throttledChange(time_delta, this._maneuverability, desired_angle_change);
   var desired_speed_change = this._targetSpeed - this._ship._speed;
   this._ship._speed += this._throttledChange(time_delta, this._acceleration, desired_speed_change);
@@ -193,8 +210,15 @@ SensorModule.prototype.getProperties = function() {
     distances.push(this._ship.distance(enemies[i]));
   }
   return {
-    relativeAngles: relative_angles,
-    distances: distances
+    GetEnemiesCount: function() {
+      return enemies.length;
+    },
+    GetRelativeAngle: function(index) {
+      return relative_angles[index];
+    },
+    GetDistance: function(index) {
+      return distances[index];
+    }
   }
 };
 SensorModule.prototype.loadProperties = function(unused_env) {};
@@ -203,8 +227,8 @@ SensorModule.prototype._relativeAngle = function(ship) {
   var b_properties = ship.getProperties();
   var dx = b_properties.x - a_properties.x;
   var dy = b_properties.y - a_properties.y;
-  var angle = (360 + Math.atan2(-dx, dy) * 180 / Math.PI) % 360;
-  return angle - a_properties.angle;
+  var angle = (Math.atan2(-dx, dy) * 180 / Math.PI + 360) % 360;
+  return NormalizeRelativeAngle(angle - a_properties.angle);
 };
 SensorModule.prototype._getEnemyShips = function() {
   var enemies = [];

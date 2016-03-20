@@ -1,6 +1,27 @@
 <html>
   <head>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+    <style>
+      #indicator {
+        display: none; 
+        position: absolute;
+        top: 10%;
+        left: 10%;
+        height: 40px;
+        width: 80%;
+        font-size: 30px;
+        background-color: rgba(0, 255, 0, 0.7);
+        text-align: center;
+        border-radius: 20px;
+      }
+
+      #log {
+        padding: 10px;
+        border: solid 1px black;
+        position: absolute;
+        bottom: 0px;
+      }
+    </style>
   </head>
   <body>
     Ship A
@@ -10,24 +31,44 @@ env.targetSpeed = 1;</textarea>
     <textarea id="logic2" style="width: 400px; height: 200px;">env.targetAngle = (env.currentAngle + 1) % 360;
 env.targetSpeed = 2;
 env.shoot = true;</textarea> -->
-    <textarea id="logic1" style="width: 400px; height: 200px;">targetAngle = 180;
+    <textarea id="logic1" style="width: 400px; height: 200px;">targetAngle = currentAngle + 10;
 targetSpeed = 100;</textarea>
     Ship B
     <textarea id="logic2" style="width: 400px; height: 200px;">
-targetAngle = targetAngle + relativeAngles[0];
+targetAngle = currentAngle + GetRelativeAngle(0);
 targetSpeed = 150;
-if (distances[0] < 150) {
+if (GetDistance(0) < 150) {
   shoot = true;
 }</textarea>
     <input type="button" value="run" onclick="run();"/>
-<div id="indicator" style="display: none; font-size: 30px;">processing...</div>
-<div id="log"></div>
+<div id="indicator">processing...</div>
+<div id="log">
+  <div class="timer"></div>
+  <ul class="events"></ul>
+</div>
     <canvas id="game" width="1024" height="768"></canvas>
    	<script>
 
-var Visualization = function(canvas) {
+var Log = function(container) {
+  this._container = container;
+  this._timer = $('.timer');
+  this._events = $('.events');
+  this._events.html('');
+  this._time;
+};
+Log.prototype.setTime = function(time) {
+  this._time = time / 1000
+  this._timer.html(this._time + 's');
+};
+Log.prototype.logMessage = function(source, msg) {
+  var new_msg = $('<li><span class="time">' + this._time + '</span> <span class="source">[' + source + ']:</span><span class="msg">' + msg + '</span></li>');
+  this._events.append(new_msg);
+};
+
+var Visualization = function(canvas, log) {
   this._canvas = canvas;
   this._renderers = {};
+  this._log = log;
 };
 
 Visualization.prototype.renderFrame = function(frame) {
@@ -43,7 +84,7 @@ Visualization.prototype.renderFrame = function(frame) {
     ctx.restore();
 
     for (var j = 0; j < object.messages.length; ++j) {
-      console.log(object.messages[j]);
+      this._log.logMessage(object.faction, object.messages[j]);
     }
   }
 }
@@ -60,17 +101,26 @@ var shipRenderer = function(ctx) {
   ctx.lineTo(-10, -15);
   ctx.closePath();
   ctx.fill();
+
+  ctx.beginPath();
+  ctx.moveTo(0, -500);
+  ctx.lineTo(0, 500);
+  ctx.closePath();
+  ctx.stroke();
 }
 
 var rocketRenderer = function(ctx) {
   ctx.fillRect(-2, -10, 4, 20);
 }
 
+
+
 var timer_id = null;
 var run = function() {
   clearTimeout(timer_id);
 
-  var viz = new Visualization(document.getElementById("game"));
+  var log = new Log($('#log').get(0));
+  var viz = new Visualization(document.getElementById("game"), log);
   viz.registerRenderer('SHIP', shipRenderer);
   viz.registerRenderer('ROCKET', rocketRenderer);
 
@@ -86,11 +136,10 @@ var run = function() {
   };
 
   var indicator = $('#indicator');
-  var log = $('#log');
-  log.html('');
   indicator.show();
+  log.setTime(0);
   $.post({
-    url: 'http://localhost:8080',
+    url: window.location,
     data: JSON.stringify(spec),
     success: function(response) {
       indicator.hide();
@@ -107,7 +156,7 @@ var run = function() {
         if (row.type == 'FRAME') {
           viz.renderFrame(row.contents);
         }
-        log.html(20 * i);
+        log.setTime(i * 20);
         ++i;
       }, 20);
     },
