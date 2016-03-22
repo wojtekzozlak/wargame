@@ -1,4 +1,5 @@
 var utils = require('./utils.js');
+var geometry = require('./geometry.js');
 var vm = require('vm');
 
 var ObjectType = {
@@ -17,16 +18,22 @@ var NormalizeRelativeAngle = function(relative_angle) {
   }
 };
 
-var SimulationObject = function(positionX, positionY, angle, speed, faction) {
+var SimulationObject = function(positionX, positionY, angle, speed, faction, geometry) {
   this._positionX = positionX;
   this._positionY = positionY;
   this._angle = angle;
   this._speed = speed;
   this._faction = faction;
   this._messages = [];
+  this._geometry = geometry;
 };
 SimulationObject.prototype.reconfigure = utils.ABSTRACT_METHOD;
 SimulationObject.prototype.getProperties = utils.ABSTRACT_METHOD;
+SimulationObject.prototype.getGeometry = function() {
+  return this._geometry
+      .Rotated(this._angle)
+      .Translated(new geometry.Vector(this._positionX, this._positionY));
+}
 SimulationObject.prototype._typeId = ObjectType.UNKNOWN;
 SimulationObject.prototype._emitMessage = function(msg) {
   this._messages.push(msg);
@@ -58,7 +65,10 @@ SimulationObject.prototype.distance = function(other) {
 
 
 var Rocket = function(positionX, positionY, angle) {
-  SimulationObject.call(this, positionX, positionY, angle, /*speed=*/400, /*faction=*/null);
+  var g = new geometry.Poly([new geometry.Point(-2, 10), new geometry.Point(2, 10),
+                             new geometry.Point(2, -10), new geometry.Point(-2, -10)]);
+  SimulationObject.call(this, positionX, positionY, angle, /*speed=*/400, /*faction=*/null,
+                        g);
 };
 Rocket.prototype = Object.create(SimulationObject.prototype);
 Rocket.prototype.reconfigure = function() {}
@@ -66,7 +76,9 @@ Rocket.prototype._typeId = ObjectType.ROCKET;
 
 
 Ship = function(positionX, positionY, angle, logic, faction) {
-  SimulationObject.call(this, positionX, positionY, angle, /*speed=*/0, faction);
+  var g = new geometry.Poly([new geometry.Point(0, 15), new geometry.Point(10, -15),
+                             new geometry.Point(-10, -15)]);
+  SimulationObject.call(this, positionX, positionY, angle, /*speed=*/0, faction, g);
   this._logic = new vm.Script(logic, { displayErrors: true, filename: 'ai.js' });
   this._context = new vm.createContext({ initialized: false });
   this._context['messages'] = [];
@@ -184,10 +196,10 @@ WeaponModule.prototype.loadProperties = function(env) {
   if (env.shoot && this._ammoAvailable()) {
     this._time_since_last_shot = 0;
     var ship_properties = this._ship.getProperties();
-    var offset = utils.RotateVector(0, 10, ship_properties.angle);
+    var offset = utils.RotateVector(0, 20, ship_properties.angle);
     this._simulation.addObject(new Rocket(ship_properties.x + offset.x,
-                                        ship_properties.y + offset.y,
-                                        ship_properties.angle));
+                                          ship_properties.y + offset.y,
+                                          ship_properties.angle));
     this._ship._emitMessage("Shoot!");
   }
 };

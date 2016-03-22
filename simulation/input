@@ -5,6 +5,6 @@
     "logic": "targetSpeed = 100;"
   }, {
     "name": "PlayerB",
-    "logic": "targetAngle = targetAngle + relativeAngles[0];\n targetSpeed = 150;\n if (distances[0] < 150) { shoot = true; throw Error(''); }"
+    "logic": "targetAngle = targetAngle + GetRelativeAngle(0);\n targetSpeed = 150;\n if (GetDistance(0) < 150) { shoot = true; throw Error(''); }"
   }]
 }

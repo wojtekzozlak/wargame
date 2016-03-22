@@ -5,6 +5,12 @@ var Point = function(x, y) {
 Point.prototype.Translated = function(vector) {
   return new Point(this.x + vector.dx, this.y + vector.dy);
 };
+Point.prototype.Rotated = function(angle) {
+  var rad_angle = angle * Math.PI / 180;
+  var new_x = this.x * Math.cos(rad_angle) - this.y * Math.sin(rad_angle);
+  var new_y = this.x * Math.sin(rad_angle) + this.y * Math.cos(rad_angle);
+  return new Point(new_x, new_y);
+};
 
 var Vector = function(dx, dy) {
   this.dx = dx;
@@ -72,6 +78,8 @@ Poly.prototype.IsCrossing = function(other) {
   for (var i = 0; i < segments_a.length; ++i) {
     for (var j = 0; j < segments_b.length; ++j) {
       if (CrossingLineSegments(segments_a[i], segments_b[j])) {
+        console.error(segments_a[i]);
+        console.error(segments_b[j]);
         return true;
       }
     } 
@@ -84,6 +92,13 @@ Poly.prototype.Translated = function(vector) {
     translated_points.push(this.points[i].Translated(vector));
   }
   return new Poly(translated_points);
+};
+Poly.prototype.Rotated = function(angle) {
+  var rotated_points = [];
+  for (var i = 0; i < this.points.length; ++i) {
+    rotated_points.push(this.points[i].Rotated(angle));
+  }
+  return new Poly(rotated_points);
 };
 
 module.exports = {

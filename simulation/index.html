@@ -80,7 +80,22 @@ Visualization.prototype.renderFrame = function(frame) {
     ctx.translate(400, 400);
     ctx.translate(object.x, object.y);
     ctx.rotate(object.angle * Math.PI / 180);
+
     this._renderers[object.typeId](ctx);
+    ctx.restore();
+
+/*    ctx.save();
+    ctx.translate(400, 400);
+    ctx.fillStyle = '#CCCCCC';
+    ctx.beginPath();
+    var geometry = object.geometry.points;
+    ctx.moveTo(geometry[0].x, geometry[0].y);
+    for (var j = 0; j < geometry.length; ++j) {
+      ctx.lineTo(geometry[j].x, geometry[j].y);
+    }
+    ctx.closePath();
+    ctx.fill(); */
+
     ctx.restore();
 
     for (var j = 0; j < object.messages.length; ++j) {
@@ -110,19 +125,24 @@ var shipRenderer = function(ctx) {
 }
 
 var rocketRenderer = function(ctx) {
+  ctx.fillStyle = 'red';
   ctx.fillRect(-2, -10, 4, 20);
 }
 
+var log = new Log($('#log').get(0));
+var viz = new Visualization(document.getElementById("game"), log);
+viz.registerRenderer('SHIP', shipRenderer);
+viz.registerRenderer('ROCKET', rocketRenderer);
 
+var frames = [];
+
+var ShowFrame = function(i) {
+  viz.renderFrame(frames[i].contents);
+};
 
 var timer_id = null;
 var run = function() {
   clearTimeout(timer_id);
-
-  var log = new Log($('#log').get(0));
-  var viz = new Visualization(document.getElementById("game"), log);
-  viz.registerRenderer('SHIP', shipRenderer);
-  viz.registerRenderer('ROCKET', rocketRenderer);
 
   var spec = {
     maxDurationMs: 10000,
@@ -142,6 +162,7 @@ var run = function() {
     url: window.location,
     data: JSON.stringify(spec),
     success: function(response) {
+      frames = response;
       indicator.hide();
 
       var i = 0;

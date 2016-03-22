@@ -35,9 +35,10 @@ Simulation.prototype._detectCollisions = function() {
   var destroyed = {};
   for (var i = 0; i < this._objects.length; ++i) {
     for (var j = i + 1; j < this._objects.length; ++j) {
+      var geo_a = this._objects[i].getGeometry();
+      var geo_b = this._objects[j].getGeometry();
       // Replace intersection of hitboxes.
-      var distance = this._objects[i].distance(this._objects[j]);
-      if (distance < 5) {
+      if (geo_a.IsCrossing(geo_b)) {
         destroyed[i] = true;
         destroyed[j] = true;
       }
@@ -47,6 +48,9 @@ Simulation.prototype._detectCollisions = function() {
   var remaining_objects = [];
   for (var i = 0; i < this._objects.length; ++i) {
     if (!(i in destroyed)) {
+      remaining_objects.push(this._objects[i]);
+    } else {
+      this._objects[i].destroyed = true;
       remaining_objects.push(this._objects[i]);
     }
   }
@@ -58,7 +62,7 @@ Simulation.prototype.factionsAlive = function() {
   var factions_alive = {};
   for (var i = 0; i < this._objects.length; ++i) {
     var obj_faction = this._objects[i].getProperties().faction;
-    if (obj_faction != null) {
+    if (obj_faction != null && !this._objects[i].destroyed) {
       factions_alive[obj_faction] = true;
     }
   }
