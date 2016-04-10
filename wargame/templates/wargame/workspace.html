@@ -1,0 +1,326 @@
+{% load staticfiles %}
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+    <link href="{% static "bootstrap/css/bootstrap.min.css" %}" rel="stylesheet">
+    <link href="{% static "codemirror/codemirror.css" %}" rel="stylesheet">
+    <script src="{% static "codemirror/codemirror.js" %}"></script>
+    <script src="{% static "codemirror/mode/javascript/javascript.js" %}"></script>
+    <script src="{% static "codemirror/addon/edit/matchbrackets.js" %}"></script>
+    <script src="{% static "codemirror/addon/edit/trailingspace.js" %}"></script>
+    <style>
+      .simulation {
+        display: table;
+        height: 400px;
+        width: 100%;
+        overflow: auto;
+      }
+      .board {
+        border: solid 1px black;
+        background-color: gray;
+        display: table-cell;
+      }
+      .board canvas {
+        width: 100%;
+        height: 100%;
+      }
+      .side-panel {
+        width: 200px;
+        border: solid 1px black;
+        display: table-cell;
+        vertical-align: top;
+      }
+      #log {
+        padding: 10px;
+      }
+      #indicator {
+        display: none; 
+        position: absolute;
+        top: 10%;
+        left: 10%;
+        height: 40px;
+        width: 80%;
+        font-size: 30px;
+        background-color: rgba(0, 255, 0, 0.7);
+        text-align: center;
+        border-radius: 20px;
+        z-index: 999;
+      }
+
+      .editor-box {
+        width: 45%;
+        display: inline-block;
+      }
+      .CodeMirror {
+        border: solid 1px #999;
+      }
+      .cm-trailingspace {
+        text-decoration: underline;
+        color: #A99;
+      }
+    </style>
+  </head>
+  <body>
+<div class="simulation">
+  <div class="board">
+    <canvas id="game"></canvas>
+  </div>
+  <div class="side-panel">
+    <div id="controls">
+      <input type="button" value="reload" class="reload btn btn-primary" onclick="run();" title="play"/>
+      <input type="button" value="▶" class="play btn btn-success" title="play"/>
+      <input type="button" value="||" class="pause btn btn-warning" title="pause"/>
+      <input type="button" value="■" class="stop btn btn-danger" title="stop"/>
+    </div>
+    <div id="log">
+      <div class="timer"></div>
+      <ul class="events"></ul>
+    </div>
+  </div>
+</div>
+<div id="editor1" class="editor-box">Ship A:</div>
+<div id="editor2" class="editor-box">Ship B:</div>
+</textarea>
+<div id="indicator">processing...</div>
+   	<script>
+var editor_settings = {
+  lineNumbers: true,
+  mode: 'javascript',
+  tabSize: 2,
+  matchBrackets: true,
+  showTrailingSpace: true
+};
+
+var resizeGui = function() {
+  var canvas = $('.board canvas');
+  canvas.attr('width', parseInt(canvas.css('width')));
+  canvas.attr('height', parseInt(canvas.css('height')));
+};
+
+var editor_1 = CodeMirror($('#editor1').get(0), editor_settings);
+editor_1.setValue("targetAngle = currentAngle + 10;\ntargetSpeed = 100;");
+var editor_2 = CodeMirror($('#editor2').get(0), editor_settings);
+editor_2.setValue("targetAngle = currentAngle + GetRelativeAngle(0);\ntargetSpeed = 150;\nif (GetDistance(0) < 150) {\n  shoot = true;\n}");
+
+var Controls = function(container, visualization, log) {
+  this._container = container;
+  this._visualization = visualization;
+  this._timer_id = null;
+  this._reload_btn = $('.reload', this._container);
+  this._play_btn = $('.play', this._container);
+  this._pause_btn = $('.pause', this._container);
+  this._stop_btn = $('.stop', this._container);
+
+  this._player_btns = $('input[type=button]').not('.reload');
+
+  this._player_btns.prop('disabled', true);
+  this._play_btn.click($.proxy(this.play, this));
+  this._pause_btn.hide().click($.proxy(this.pause, this));
+  this._stop_btn.click($.proxy(this.stop, this));
+  this.setFrames([]);
+};
+Controls.prototype.setFrames = function(frames) {
+  if (frames.length > 0) {
+    this._player_btns.prop('disabled', false);
+  }
+  this._frames = frames;
+  this._frame = 0;
+};
+Controls.prototype.play = function(frames) {
+  if (this._timer_id !== null) {
+    return;
+  }
+  this._play_btn.hide();
+  this._pause_btn.show();
+  this._timer_id = setInterval($.proxy(this._drawFrame, this), 20);
+};
+Controls.prototype._drawFrame = function() {
+  if (this._frame == this._frames.length) {
+    this.pause();
+    this.rewind(0);
+    return;
+  }
+
+  var frame = this._frames[this._frame];
+  if (frame.type == 'FRAME') {
+    this._visualization.renderFrame(frame.contents);
+  }
+  this._frame++;
+};
+Controls.prototype.pause = function() {
+  clearTimeout(this._timer_id);
+  this._timer_id = null;
+  this._play_btn.show();
+  this._pause_btn.hide();
+};
+Controls.prototype.reload;
+Controls.prototype.stop = function() {
+  this.pause();
+  this.rewind(0);
+  this._visualization.clearCanvas();
+};
+Controls.prototype.rewind = function(frame) {
+  frame = Math.min(this._frames.length - 1, frame);
+  this._frame = frame;
+};
+
+
+var Log = function(container) {
+  this._container = container;
+  this._timer = $('.timer', container);
+  this._events = $('.events', container);
+  this.clear();
+};
+Log.prototype.clear = function() {
+  this._events.html('');
+  this._time = 0;
+}
+Log.prototype.setTime = function(time) {
+  this._time = time / 1000
+  this._timer.html(this._time + 's');
+};
+Log.prototype.logMessage = function(source, msg) {
+  var new_msg = $('<li><span class="time">' + this._time + '</span> <span class="source">[' + source + ']:</span><span class="msg">' + msg + '</span></li>');
+  this._events.append(new_msg);
+};
+
+var Visualization = function(canvas, log) {
+  this._canvas = canvas;
+  this._renderers = {};
+  this._log = log;
+};
+Visualization.prototype.renderFrame = function(frame) {
+  var ctx = this._canvas.getContext("2d");
+  ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
+  ctx.save();
+  ctx.translate(Math.floor(this._canvas.width / 2),
+                Math.floor(this._canvas.height / 2));
+  ctx.scale(0.5, 0.5);
+
+  for (var i = 0; i < frame.length; ++i) {
+    var object = frame[i];
+    ctx.save();
+    ctx.translate(object.x, object.y);
+    ctx.rotate(object.angle * Math.PI / 180);
+
+    this._renderers[object.typeId](ctx);
+    ctx.restore();
+
+/*    ctx.save();
+    ctx.translateu(offset_x, offset_y);
+    ctx.fillStyle = '#CCCCCC';
+    ctx.beginPath();
+    var geometry = object.geometry.points;
+    ctx.moveTo(geometry[0].x, geometry[0].y);
+    for (var j = 0; j < geometry.length; ++j) {
+      ctx.lineTo(geometry[j].x, geometry[j].y);
+    }
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.restore(); */
+
+    for (var j = 0; j < object.messages.length; ++j) {
+      this._log.logMessage(object.faction, object.messages[j]);
+    }
+  }
+  ctx.restore();
+};
+Visualization.prototype.registerRenderer = function(type_id, renderer) {
+  this._renderers[type_id] = renderer;
+};
+Visualization.prototype.clearCanvas = function() {
+  var ctx = this._canvas.getContext("2d");
+  ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
+};
+
+var shipRenderer = function(ctx) {
+  ctx.fillStyle = '#000000';
+  ctx.beginPath();
+  ctx.moveTo(0, 15);
+  ctx.lineTo(10, -15);
+  ctx.lineTo(-10, -15);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.moveTo(0, -500);
+  ctx.lineTo(0, 500);
+  ctx.closePath();
+  ctx.stroke();
+}
+
+var rocketRenderer = function(ctx) {
+  ctx.fillStyle = 'red';
+  ctx.fillRect(-2, -10, 4, 20);
+}
+
+var log = new Log($('#log').get(0));
+var viz = new Visualization(document.getElementById("game"), log);
+viz.registerRenderer('SHIP', shipRenderer);
+viz.registerRenderer('ROCKET', rocketRenderer);
+
+var controls = new Controls($('#controls'), viz);
+
+
+var frames = [];
+
+var ShowFrame = function(i) {
+  viz.renderFrame(frames[i].contents);
+};
+
+var timer_id = null;
+var run = function() {
+  clearTimeout(timer_id);
+
+  var spec = {
+    maxDurationMs: 10000,
+    players: [{
+      name: 'PlayerA',
+      logic: editor_1.getValue()
+    }, {
+      name: 'PlayerB',
+      logic: editor_2.getValue()
+    }]
+  };
+
+  var indicator = $('#indicator');
+  indicator.show();
+  log.setTime(0);
+  $.post({
+    url: 'http://' + window.location.hostname + ':8081',
+    data: JSON.stringify(spec),
+    crossDomain: true,
+    success: function(response) {
+      frames = response;
+      indicator.hide();
+      controls.setFrames(response);
+      controls.play();
+
+/*      log.clear();
+
+      var i = 0;
+      timer_id = setInterval(function() {
+        if (i == response.length) {
+          clearTimeout(timer_id);
+          return;
+        }
+
+        var row = response[i];
+
+        if (row.type == 'FRAME') {
+          viz.renderFrame(row.contents);
+        }
+        log.setTime(i * 20);
+        ++i; 
+      }, 20); */
+    },
+    dataType: 'json'});
+};
+
+$(document).ready(resizeGui);
+$(window).resize(resizeGui);
+  	</script>
+  </body>
+</html>

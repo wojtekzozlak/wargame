@@ -7,7 +7,7 @@ import subprocess
 import json
 
 
-PORT = 8080
+PORT = 8081
 
 def RunSimulation(spec):
   p = subprocess.Popen(['nodejs', 'main.js'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
@@ -43,6 +43,7 @@ class ServerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     spec = json.loads(raw_data)
     
     self.send_response(200)
+    self.send_header('Access-Control-Allow-Origin','*')
     self.end_headers()
 
     output = RunSimulation(spec)
