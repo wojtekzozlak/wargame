@@ -13,9 +13,11 @@ Simulation.prototype.reconfigureObjects = function() {
     try {
       this._objects[i].reconfigure();
     } catch (e) {
+      var stack = utils.SanitizeTrace(e.stack || '');
+      stack = stack || 'Caught error: ' + e;
       err = {
         faction: this._objects[i].getProperties().faction,
-        stack: utils.SanitizeTrace(e.stack)
+        stack: stack
       }
       return new utils.ErrorValue(err);
     }

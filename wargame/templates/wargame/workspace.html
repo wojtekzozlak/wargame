@@ -26,13 +26,16 @@
         height: 100%;
       }
       .side-panel {
-        width: 200px;
+        width: 250px;
         border: solid 1px black;
         display: table-cell;
         vertical-align: top;
       }
       #log {
         padding: 10px;
+      }
+      #log li.error {
+        color: red;
       }
       #indicator {
         display: none; 
@@ -84,6 +87,8 @@
 </textarea>
 <div id="indicator">processing...</div>
    	<script>
+var FRAME_DURATION_MS = 20;
+
 var editor_settings = {
   lineNumbers: true,
   mode: 'javascript',
@@ -106,6 +111,7 @@ editor_2.setValue("targetAngle = currentAngle + GetRelativeAngle(0);\ntargetSpee
 var Controls = function(container, visualization, log) {
   this._container = container;
   this._visualization = visualization;
+  this._log = log;
   this._timer_id = null;
   this._reload_btn = $('.reload', this._container);
   this._play_btn = $('.play', this._container);
@@ -131,20 +137,27 @@ Controls.prototype.play = function(frames) {
   if (this._timer_id !== null) {
     return;
   }
+  if (this._frames.length == this._frame) {
+    this.stop();
+  }
+
   this._play_btn.hide();
   this._pause_btn.show();
-  this._timer_id = setInterval($.proxy(this._drawFrame, this), 20);
+  this._timer_id = setInterval($.proxy(this._drawFrame, this), FRAME_DURATION_MS);
 };
 Controls.prototype._drawFrame = function() {
   if (this._frame == this._frames.length) {
     this.pause();
-    this.rewind(0);
     return;
   }
-
+  this._log.setTime(this._frame * FRAME_DURATION_MS);
   var frame = this._frames[this._frame];
   if (frame.type == 'FRAME') {
     this._visualization.renderFrame(frame.contents);
+  } else if (frame.type == 'OUTCOME') {
+    if (frame.outcome = 'ERROR') {
+      this._log.logMessage(frame.faction, frame.stack, 'error');
+    }
   }
   this._frame++;
 };
@@ -158,6 +171,7 @@ Controls.prototype.reload;
 Controls.prototype.stop = function() {
   this.pause();
   this.rewind(0);
+  this._log.clear();
   this._visualization.clearCanvas();
 };
 Controls.prototype.rewind = function(frame) {
@@ -174,14 +188,15 @@ var Log = function(container) {
 };
 Log.prototype.clear = function() {
   this._events.html('');
-  this._time = 0;
+  this.setTime(0);
 }
 Log.prototype.setTime = function(time) {
   this._time = time / 1000
   this._timer.html(this._time + 's');
 };
-Log.prototype.logMessage = function(source, msg) {
-  var new_msg = $('<li><span class="time">' + this._time + '</span> <span class="source">[' + source + ']:</span><span class="msg">' + msg + '</span></li>');
+Log.prototype.logMessage = function(source, msg, severity) {
+  severity = severity || 'info';
+  var new_msg = $('<li class=' + severity + '><span class="time">' + this._time + '</span> <span class="source">[' + source + ']:</span><span class="msg">' + msg + '</span></li>');
   this._events.append(new_msg);
 };
 
@@ -206,20 +221,6 @@ Visualization.prototype.renderFrame = function(frame) {
 
     this._renderers[object.typeId](ctx);
     ctx.restore();
-
-/*    ctx.save();
-    ctx.translateu(offset_x, offset_y);
-    ctx.fillStyle = '#CCCCCC';
-    ctx.beginPath();
-    var geometry = object.geometry.points;
-    ctx.moveTo(geometry[0].x, geometry[0].y);
-    for (var j = 0; j < geometry.length; ++j) {
-      ctx.lineTo(geometry[j].x, geometry[j].y);
-    }
-    ctx.closePath();
-    ctx.fill();
-
-    ctx.restore(); */
 
     for (var j = 0; j < object.messages.length; ++j) {
       this._log.logMessage(object.faction, object.messages[j]);
@@ -261,7 +262,7 @@ var viz = new Visualization(document.getElementById("game"), log);
 viz.registerRenderer('SHIP', shipRenderer);
 viz.registerRenderer('ROCKET', rocketRenderer);
 
-var controls = new Controls($('#controls'), viz);
+var controls = new Controls($('#controls'), viz, log);
 
 
 var frames = [];
