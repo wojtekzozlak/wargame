@@ -1,5 +1,6 @@
 var utils = require('./utils.js');
 var geometry = require('./geometry.js');
+var stl = require('./stl.js')
 var vm = require('vm');
 
 var ObjectType = {
@@ -23,6 +24,7 @@ var SimulationObject = function(positionX, positionY, angle, speed, faction, geo
   this._positionY = positionY;
   this._angle = angle;
   this._speed = speed;
+  this._alive = true;
   this._faction = faction;
   this._messages = [];
   this._geometry = geometry;
@@ -54,7 +56,8 @@ SimulationObject.prototype.getProperties = function() {
     y: this._positionY,
     angle: this._angle,
     typeId: this._typeId,
-    faction: this._faction
+    faction: this._faction,
+    alive: this._alive
   };
 };
 SimulationObject.prototype.distance = function(other) {
@@ -69,8 +72,16 @@ var Rocket = function(positionX, positionY, angle) {
                              new geometry.Point(2, -10), new geometry.Point(-2, -10)]);
   SimulationObject.call(this, positionX, positionY, angle, /*speed=*/400, /*faction=*/null,
                         g);
+  this._lifeTime = 1500;
 };
 Rocket.prototype = Object.create(SimulationObject.prototype);
+Rocket.prototype.computeStep = function(time_delta) {
+  SimulationObject.prototype.computeStep.call(this, time_delta);
+  this._lifeTime -= time_delta;
+  if (this._lifeTime < 0) {
+    this._alive = false
+  }
+};
 Rocket.prototype.reconfigure = function() {}
 Rocket.prototype._typeId = ObjectType.ROCKET;
 
@@ -82,6 +93,7 @@ Ship = function(positionX, positionY, angle, logic, faction) {
   this._logic = new vm.Script(logic, { displayErrors: true, filename: 'ai.js' });
   this._context = new vm.createContext({ initialized: false });
   this._context['messages'] = [];
+  utils.ExtendDict(this._context, stl.GetStlFunctions(this._context));
   this._modules = {};
 };
 Ship.prototype = Object.create(SimulationObject.prototype);
@@ -146,16 +158,18 @@ EngineModule.prototype.wireShip = function(ship) {
 };
 EngineModule.prototype.getProperties = function() {
   return {
-    currentSpeed: this._ship_speed,
-    targetSpeed: this._targetSpeed,
-    currentAngle: this._ship._angle,
-    targetAngle: this._targetAngle
+    '_engine': {
+      currentSpeed: this._ship_speed,
+      targetSpeed: this._targetSpeed,
+      currentAngle: this._ship._angle,
+      targetAngle: this._targetAngle
+    }
   };
 };
 EngineModule.prototype.loadProperties = function(env) {
   /* Assert valid input. */
-  this._targetSpeed = env['targetSpeed'];
-  this._targetAngle = env['targetAngle'] % 360;
+  this._targetSpeed = parseInt(env._engine.targetSpeed);
+  this._targetAngle = parseInt(env._engine.targetAngle) % 360;
 };
 EngineModule.prototype.computeStep = function(time_delta) {
   this._adjustAngle(time_delta);
@@ -188,19 +202,22 @@ WeaponModule.prototype._ammoAvailable = function() {
   return this._time_since_last_shot >= this._reload_time;
 };
 WeaponModule.prototype.getProperties = function() {
+  var ammo_available = this._ammoAvailable();
   return {
-    ammoAvailable: this._ammoAvailable()
-  };
+    '_weapon': {
+      'ammoAvailable': ammo_available,
+      'shoot': false
+    },
+  }
 };
 WeaponModule.prototype.loadProperties = function(env) {
-  if (env.shoot && this._ammoAvailable()) {
+  if (env._weapon.shoot && this._ammoAvailable()) {
     this._time_since_last_shot = 0;
     var ship_properties = this._ship.getProperties();
     var offset = utils.RotateVector(0, 20, ship_properties.angle);
     this._simulation.addObject(new Rocket(ship_properties.x + offset.x,
                                           ship_properties.y + offset.y,
                                           ship_properties.angle));
-    this._ship._emitMessage("Shoot!");
   }
 };
 WeaponModule.prototype.computeStep = function(time_delta) {
@@ -222,14 +239,10 @@ SensorModule.prototype.getProperties = function() {
     distances.push(this._ship.distance(enemies[i]));
   }
   return {
-    GetEnemiesCount: function() {
-      return enemies.length;
-    },
-    GetRelativeAngle: function(index) {
-      return relative_angles[index];
-    },
-    GetDistance: function(index) {
-      return distances[index];
+    '_sensor': {
+      'enemies' : enemies,
+      'relativeAngles': relative_angles,
+      'distances': distances
     }
   }
 };

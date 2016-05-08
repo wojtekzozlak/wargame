@@ -22,7 +22,6 @@ var ReadInput = function(callback) {
 
   rl.on('close', function() {
     var input = lines.join('\n');
-console.error('input: ' + input);
     callback(JSON.parse(input));
   });
 };

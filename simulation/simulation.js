@@ -36,6 +36,12 @@ Simulation.prototype._detectCollisions = function() {
   // Simple O(n^2) algorithm.
   var destroyed = {};
   for (var i = 0; i < this._objects.length; ++i) {
+    // First of all, maybe it is dead already?
+    if (!this._objects[i].getProperties().alive) {
+      destroyed[i] = true;
+    }
+
+    // Or maybe it collided with other objects?
     for (var j = i + 1; j < this._objects.length; ++j) {
       var geo_a = this._objects[i].getGeometry();
       var geo_b = this._objects[j].getGeometry();
@@ -53,7 +59,6 @@ Simulation.prototype._detectCollisions = function() {
       remaining_objects.push(this._objects[i]);
     } else {
       this._objects[i].destroyed = true;
-      remaining_objects.push(this._objects[i]);
     }
   }
 

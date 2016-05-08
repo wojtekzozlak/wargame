@@ -37,18 +37,26 @@
       #log li.error {
         color: red;
       }
-      #indicator {
-        display: none; 
+      div#popups {
         position: absolute;
         top: 10%;
         left: 10%;
-        height: 40px;
         width: 80%;
+      }
+      div#popups div.popup {
+        display: none; 
+        height: 40px;
         font-size: 30px;
-        background-color: rgba(0, 255, 0, 0.7);
         text-align: center;
         border-radius: 20px;
         z-index: 999;
+        margin: 10px;
+      }
+      div#popups div.popup.info {
+        background-color: rgba(0, 255, 0, 0.7);
+      }
+      div#popups div.popup.error {
+        background-color: rgba(255, 0, 0, 0.7);
       }
 
       .editor-box {
@@ -65,13 +73,13 @@
     </style>
   </head>
   <body>
+<div id="popups"></div>
 <div class="simulation">
   <div class="board">
     <canvas id="game"></canvas>
   </div>
   <div class="side-panel">
     <div id="controls">
-      <input type="button" value="reload" class="reload btn btn-primary" onclick="run();" title="play"/>
       <input type="button" value="▶" class="play btn btn-success" title="play"/>
       <input type="button" value="||" class="pause btn btn-warning" title="pause"/>
       <input type="button" value="■" class="stop btn btn-danger" title="stop"/>
@@ -82,10 +90,9 @@
     </div>
   </div>
 </div>
+<input type="button" value="compile and run" class="compile btn btn-primary" onclick="run();" title="play"/><br/>
 <div id="editor1" class="editor-box">Ship A:</div>
 <div id="editor2" class="editor-box">Ship B:</div>
-</textarea>
-<div id="indicator">processing...</div>
    	<script>
 var FRAME_DURATION_MS = 20;
 
@@ -104,26 +111,49 @@ var resizeGui = function() {
 };
 
 var editor_1 = CodeMirror($('#editor1').get(0), editor_settings);
-editor_1.setValue("targetAngle = currentAngle + 10;\ntargetSpeed = 100;");
+editor_1.setValue("SetTargetAngle(GetCurrentAngle() + 10);\nSetTargetSpeed(100);");
 var editor_2 = CodeMirror($('#editor2').get(0), editor_settings);
-editor_2.setValue("targetAngle = currentAngle + GetRelativeAngle(0);\ntargetSpeed = 150;\nif (GetDistance(0) < 150) {\n  shoot = true;\n}");
+editor_2.setValue("SetTargetAngle(GetCurrentAngle() + GetRelativeAngle(0));\nSetTargetSpeed(150);\nif (GetDistance(0) < 150) {\n  Shoot();\n}");
+
+var Popup = function(text, type) {
+  type = type || Popup.INFO;
+  this._body = $('<div class="popup ' +  type + '">' + text + '</div>');
+  $(Popup._CONTAINER_SELECTOR).append(this._body);
+  this._body.fadeIn(200);
+};
+Popup.prototype.Destroy = function(time_ms) {
+  if (this._body) {
+    this._body.fadeOut(200, $.proxy(this._body.remove, this._body));
+    this._body = null;
+  }
+};
+Popup.prototype.DestroyIn = function(time_ms) {
+  var that = this;
+  setTimeout($.proxy(this.Destroy, this), time_ms);
+};
+Popup.Spawn = function(text, type, lifetime_ms) {
+  var popup = new Popup(text, type);
+  popup.DestroyIn(lifetime_ms);
+}
+Popup._CONTAINER_SELECTOR = 'div#popups';
+Popup.INFO = 'info';
+Popup.ERROR = 'error';
 
 var Controls = function(container, visualization, log) {
   this._container = container;
   this._visualization = visualization;
   this._log = log;
   this._timer_id = null;
-  this._reload_btn = $('.reload', this._container);
+
   this._play_btn = $('.play', this._container);
   this._pause_btn = $('.pause', this._container);
   this._stop_btn = $('.stop', this._container);
-
-  this._player_btns = $('input[type=button]').not('.reload');
-
+  this._player_btns = $('input[type=button]', this._container);
   this._player_btns.prop('disabled', true);
   this._play_btn.click($.proxy(this.play, this));
   this._pause_btn.hide().click($.proxy(this.pause, this));
   this._stop_btn.click($.proxy(this.stop, this));
+
   this.setFrames([]);
 };
 Controls.prototype.setFrames = function(frames) {
@@ -131,7 +161,7 @@ Controls.prototype.setFrames = function(frames) {
     this._player_btns.prop('disabled', false);
   }
   this._frames = frames;
-  this._frame = 0;
+  this.stop();
 };
 Controls.prototype.play = function(frames) {
   if (this._timer_id !== null) {
@@ -155,8 +185,12 @@ Controls.prototype._drawFrame = function() {
   if (frame.type == 'FRAME') {
     this._visualization.renderFrame(frame.contents);
   } else if (frame.type == 'OUTCOME') {
-    if (frame.outcome = 'ERROR') {
+    if (frame.outcome == 'ERROR') {
       this._log.logMessage(frame.faction, frame.stack, 'error');
+    } else if (frame.outcome == 'WINNER') {
+      this._log.logMessage('game', frame.faction + ' won the game!', 'error');
+    } else if (frame.outcome == 'TIE') {
+      this._log.logMessage('game', 'Game ended with a tie!', 'error');
     }
   }
   this._frame++;
@@ -167,7 +201,6 @@ Controls.prototype.pause = function() {
   this._play_btn.show();
   this._pause_btn.hide();
 };
-Controls.prototype.reload;
 Controls.prototype.stop = function() {
   this.pause();
   this.rewind(0);
@@ -196,7 +229,7 @@ Log.prototype.setTime = function(time) {
 };
 Log.prototype.logMessage = function(source, msg, severity) {
   severity = severity || 'info';
-  var new_msg = $('<li class=' + severity + '><span class="time">' + this._time + '</span> <span class="source">[' + source + ']:</span><span class="msg">' + msg + '</span></li>');
+  var new_msg = $('<li class=' + severity + '><span class="time">' + this._time + 's</span> <span class="source">[' + source + ']:</span><span class="msg">' + msg + '</span></li>');
   this._events.append(new_msg);
 };
 
@@ -286,8 +319,7 @@ var run = function() {
     }]
   };
 
-  var indicator = $('#indicator');
-  indicator.show();
+  var processing_popup = new Popup('processing...');
   log.setTime(0);
   $.post({
     url: 'http://' + window.location.hostname + ':8081',
@@ -295,29 +327,15 @@ var run = function() {
     crossDomain: true,
     success: function(response) {
       frames = response;
-      indicator.hide();
+      processing_popup.Destroy();
       controls.setFrames(response);
       controls.play();
-
-/*      log.clear();
-
-      var i = 0;
-      timer_id = setInterval(function() {
-        if (i == response.length) {
-          clearTimeout(timer_id);
-          return;
-        }
-
-        var row = response[i];
-
-        if (row.type == 'FRAME') {
-          viz.renderFrame(row.contents);
-        }
-        log.setTime(i * 20);
-        ++i; 
-      }, 20); */
     },
-    dataType: 'json'});
+    dataType: 'json'}).fail(function(xhr, text_status) {
+      processing_popup.Destroy();
+      Popup.Spawn('Something went wrong :(', Popup.ERROR, 2000);
+    });
+      
 };
 
 $(document).ready(resizeGui);
