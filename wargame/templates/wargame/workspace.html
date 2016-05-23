@@ -3,12 +3,16 @@
 <html>
   <head>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+    <script src="{% static "js/jquery.cookie.js" %}"></script>
+    <script src="//www.jsviews.com/download/jsrender.js"></script>
     <link href="{% static "bootstrap/css/bootstrap.min.css" %}" rel="stylesheet">
     <link href="{% static "codemirror/codemirror.css" %}" rel="stylesheet">
     <script src="{% static "codemirror/codemirror.js" %}"></script>
     <script src="{% static "codemirror/mode/javascript/javascript.js" %}"></script>
     <script src="{% static "codemirror/addon/edit/matchbrackets.js" %}"></script>
     <script src="{% static "codemirror/addon/edit/trailingspace.js" %}"></script>
+
+    <script src="{% static "js/ai_editor.js" %}"></script>
     <style>
       .simulation {
         display: table;
@@ -70,9 +74,40 @@
         text-decoration: underline;
         color: #A99;
       }
+
+      div.ai-list {
+        border: solid 1px black;
+        display: inline-block;
+      }
+      div.ai-list ul {
+        list-style: none;
+        padding: 0px;
+      }
+      div.ai-list li:hover {
+        background-color: gray;
+      }
+      div.ai-list li.selected {
+        background-color: yellow;
+      }
+      div.ai-list li {
+        padding: 10px;
+        cursor: pointer;
+      }
+      div.ai-editor {
+        width: 70%;
+        float: left;
+      }
+      div.ai-editor div.CodeMirror.disabled {
+        background-color: #EEE;
+      }
+      input.ai-name, input.new-ai {
+        width: 200px;
+        margin: 5px;
+      }
     </style>
   </head>
   <body>
+<div id="top-bar">logged as: {{ request.user.username }}</div>
 <div id="popups"></div>
 <div class="simulation">
   <div class="board">
@@ -91,29 +126,28 @@
   </div>
 </div>
 <input type="button" value="compile and run" class="compile btn btn-primary" onclick="run();" title="play"/><br/>
-<div id="editor1" class="editor-box">Ship A:</div>
-<div id="editor2" class="editor-box">Ship B:</div>
+<div id="editor">
+  <input type="text" class="ai-name form-control"/>
+  <div class="ai-editor"></div>
+  <div class="ai-list"></div><br/>
+  <input type="text" class="new-ai form-control" placeholder="ai name"/>
+  <input type="button" class="add btn btn-primary" value="add"/><br/>
+  <input type="button" class="save btn btn-success" value="save"/>
+  <input type="button" class="discard btn btn-warning" value="discard changes"/>
+  <input type="button" class="delete btn btn-danger" value="delete"/>
+</div>
+
    	<script>
 var FRAME_DURATION_MS = 20;
 
-var editor_settings = {
-  lineNumbers: true,
-  mode: 'javascript',
-  tabSize: 2,
-  matchBrackets: true,
-  showTrailingSpace: true
-};
+
+var editor = new AiEditor($('div#editor'));
 
 var resizeGui = function() {
   var canvas = $('.board canvas');
   canvas.attr('width', parseInt(canvas.css('width')));
   canvas.attr('height', parseInt(canvas.css('height')));
 };
-
-var editor_1 = CodeMirror($('#editor1').get(0), editor_settings);
-editor_1.setValue("SetTargetAngle(GetCurrentAngle() + 10);\nSetTargetSpeed(100);");
-var editor_2 = CodeMirror($('#editor2').get(0), editor_settings);
-editor_2.setValue("SetTargetAngle(GetCurrentAngle() + GetRelativeAngle(0));\nSetTargetSpeed(150);\nif (GetDistance(0) < 150) {\n  Shoot();\n}");
 
 var Popup = function(text, type) {
   type = type || Popup.INFO;
@@ -164,7 +198,7 @@ Controls.prototype.setFrames = function(frames) {
   this.stop();
 };
 Controls.prototype.play = function(frames) {
-  if (this._timer_id !== null) {
+  if (this._timer_id != null) {
     return;
   }
   if (this._frames.length == this._frame) {
@@ -335,7 +369,6 @@ var run = function() {
       processing_popup.Destroy();
       Popup.Spawn('Something went wrong :(', Popup.ERROR, 2000);
     });
-      
 };
 
 $(document).ready(resizeGui);
