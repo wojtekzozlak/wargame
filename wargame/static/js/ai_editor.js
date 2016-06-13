@@ -57,7 +57,6 @@ AiList.prototype.Update = function() {
         var ai = ais[index];
         still_selected = still_selected || this._context.selected == ai.id;
       }
-console.log(still_selected);
       if (!still_selected) {
         this._context.selected = undefined;
         this._pick_callback({name: '', logic: ''});
@@ -107,7 +106,6 @@ var AiEditor = function(container) {
   this.Render();
 };
 AiEditor.prototype._SetLogic = function(ai_data){
-console.log(ai_data);
   this._original_data = ai_data
   this._ai_name_input.value = this._original_data.name;
   this._text_editor.setValue(this._original_data.logic);

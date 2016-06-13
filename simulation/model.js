@@ -180,6 +180,7 @@ EngineModule.prototype._adjustAngle = function(time_delta) {
     desired_angle_change -= 360;
   }
   this._ship._angle += this._throttledChange(time_delta, this._maneuverability, desired_angle_change);
+  this._ship._angle %= 360
   var desired_speed_change = this._targetSpeed - this._ship._speed;
   this._ship._speed += this._throttledChange(time_delta, this._acceleration, desired_speed_change);
 };
@@ -214,7 +215,7 @@ WeaponModule.prototype.loadProperties = function(env) {
   if (env._weapon.shoot && this._ammoAvailable()) {
     this._time_since_last_shot = 0;
     var ship_properties = this._ship.getProperties();
-    var offset = utils.RotateVector(0, 20, ship_properties.angle);
+    var offset = utils.RotateVector(0, 30, ship_properties.angle);
     this._simulation.addObject(new Rocket(ship_properties.x + offset.x,
                                           ship_properties.y + offset.y,
                                           ship_properties.angle));

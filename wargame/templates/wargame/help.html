@@ -1,0 +1,97 @@
+{% load markdown_deux_tags %}
+
+{% markdown %}
+
+Manual
+======
+
+The goal of the game is simple - to shoot down the enemy ship. To do so, one
+must provide an AI written in JavaScript.
+
+The AI has a form of a single script which is ran every 100ms and may
+reconfigure ship controls, e.g. change the speed, direction it is heading or
+launch a missile.
+
+
+Ships
+-----
+
+Each ship has the same parameters:
+
+* Can turn up to 90 degress per second.
+* Can change its velocity up to 25 units per second. Curently there is speed
+  is not limited.
+* Can shoot 1 rocket per second.
+
+Rockets
+-------
+
+Each rocket has a constant speed of 400 units and goes in a straight line.
+A rocket lasts for 1.5 second. After that time it vanishes.
+
+
+Code samples
+============
+
+Flying in a circle and shooting
+--------------------------------
+
+    // Initial speed is always 0.
+    SetTargetSpeed(200);
+    SetTargetAngle(GetCurrentAngle() + 90);
+    Shoot();
+
+Following the enemy
+-------------------
+
+    SetTargetSpeed(100);
+    SetTargetAngle(GetCurrentAngle() + GetRelativeAngle(0));
+
+Running away from the enemy
+----------------------
+
+    SetTargetSpeed(200);
+    SetTargetAngle(GetCurrentAngle() + GetRelativeAngle(0) + 180);
+
+Flying randomly
+----------------
+
+    SetTargetSpeed(200);
+    SetTargetAngle(GetCurrentAngle() + (Math.random() * 40 - 20));
+
+Persistent state between iterations
+-----------------------------------
+
+    var counter;
+    // Assign the initial value only during the first iteration.
+    if (counter == undefined) {
+      counter = 0;
+    }
+
+    // Shoot only once per 40 iterations (4 sec).
+    if (counter == 0) {
+      Shoot();
+    }
+    counter++;
+    counter %= 40;
+
+
+Method reference
+================
+
+{% for method_name, reference in docs.items %}
+
+### `{{ method_name }}({{ reference.args|join:', ' }})`
+
+{{ reference.comment }}
+
+{% for arg, desc in reference.args.items %}
+  * `{{ arg }}`: {{ desc }}
+{% endfor %}
+
+----
+
+{% endfor %}
+
+{% endmarkdown %}
+

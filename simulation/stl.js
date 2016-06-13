@@ -3,51 +3,82 @@ var Stl = function(env) {
   return {
     /* Sensor functions. */
     'GetEnemiesCount': {
-      'comment': 'Returns a count of the enemy ships.',
+      'docs': {
+        'comment': 'Returns a count of the enemy ships.'
+      },
       'def': function() {
         return env._sensor.enemies.length
       }
     },
     'GetRelativeAngle': {
-      'comment': 'Returns an angle between your ship and given enemy ship.',
+      'docs': {
+        'comment': 'Returns an angle between your ship and given enemy ship.',
+        'args': {
+          'index': 'An integer.'
+        }
+      },
       'def': function(index) {
         return env._sensor.relativeAngles[index];
       }
     },
     'GetDistance': {
-      'comment': 'Returns distance between your ship and given enemy ship.',
+      'docs': {
+        'comment': 'Returns distance between your ship and given enemy ship.',
+        'args': {
+          'index': 'An integer.'
+        }
+      },
       'def': function(index) {
         return env._sensor.distances[index];
       }
     },
     /* Weapon functions. */
     'Shoot': {
-      'comment': 'Shoots a rocket (if ammo is available).',
+      'docs': {
+        'comment': 'Shoots a rocket (if ammo is available).',
+        'args': {
+          'index': 'An integer.'
+        }
+      },
       'def': function(index) {
         env._weapon.shoot = true;
       }
     },
     /* Engine module. */
     'GetCurrentSpeed': {
-      'comment': 'Returns current speed of your ship.',
+      'docs': {
+        'comment': 'Returns current speed of your ship.'
+      },
       'def': function() {
         return env._engine.currentSpeed;
       }
     },
     'GetCurrentAngle': {
-      'comment': 'Returns a current angle of your ship (relative to north).',
+      'docs': {
+        'comment': 'Returns a current angle of your ship (relative to north).'
+      },
       'def': function() {
         return env._engine.currentAngle;
       }
     },
     'SetTargetSpeed': {
-      'comment': 'Sets a target speed of your ship.',
+      'docs': {
+        'comment': 'Sets a target speed of your ship.',
+        'args': {
+          'new_speed': 'An integer.'
+        }
+      },
       'def': function(new_speed) {
         env._engine.targetSpeed = new_speed;
       }
     },
     'SetTargetAngle': {
-      'comment': 'Sets a target angle of your ship',
+      'docs': {
+        'comment': 'Sets a target angle of your ship',
+        'args': {
+          'new_angle': 'An integer.'
+        }
+      },
       'def': function(new_angle) {
         env._engine.targetAngle = new_angle;
       }

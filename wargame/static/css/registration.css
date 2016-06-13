@@ -1,0 +1,18 @@
+body {
+  text-align: center;
+}
+
+body > div.container {
+  width: auto;
+  text-align: right !important;
+  margin-top: 50px;
+  display: inline-block;
+}
+
+body > div.container li {
+  padding: 5px;
+}
+ul.errorlist {
+  color: red;
+  list-style-type: none;
+}

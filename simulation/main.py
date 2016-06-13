@@ -3,15 +3,19 @@ import urlparse
 import SocketServer
 import BaseHTTPServer
 
-import subprocess
 import json
+import os
+import subprocess
 
+MODULE_DIR = os.path.dirname(__file__)
 
 PORT = 8081
 
 def Validate(code):
   wrapped_code = "(function () { %s })\n" % code
-  p = subprocess.Popen(['nodejs'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+  p = subprocess.Popen(['nodejs'], cwd=MODULE_DIR,
+                       stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                       stderr=subprocess.PIPE)
   out, err = p.communicate(input=wrapped_code)
   if p.returncode != 0:
     err_lines = err.split('\n')
@@ -23,9 +27,26 @@ def Validate(code):
 
 
 def RunSimulation(spec):
-  p = subprocess.Popen(['nodejs', 'main.js'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+  p = subprocess.Popen(['nodejs', 'main.js'], cwd=MODULE_DIR,
+                       stdin=subprocess.PIPE, stdout=subprocess.PIPE)
   out, err = p.communicate(input=json.dumps(spec) + "\n")
-  return out
+  return json.loads(out)
+
+
+def ValidateAndRun(spec):
+  for player in spec['players']:
+    error = Validate(player['logic'])
+    if error:
+      line, hint, details = error
+      # TODO(wzoltak): It is ugly to handle it here :(.
+      return [{
+        'faction': player['name'],
+        'type': 'OUTCOME',
+        'outcome': 'ERROR',
+        'stack': 'Syntax error at line %d: %s\n<pre>%s</pre>' % (line, details, hint)
+      }]
+  else:
+    return RunSimulation(spec)
 
 
 class ServerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
@@ -41,25 +62,11 @@ class ServerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     length = int(self.headers.getheader('content-length'))
     raw_data = self.rfile.read(length)
     spec = json.loads(raw_data)
+    output = json.dumps(ValidateAndRun(spec))
     
     self.send_response(200)
     self.send_header('Access-Control-Allow-Origin','*')
     self.end_headers()
-
-    for player in spec['players']:
-      error = Validate(player['logic'])
-      if error:
-        line, hint, details = error
-        # TODO(wzoltak): It is ugly to handle it here :(.
-        output = json.dumps([{
-          'faction': player['name'],
-          'type': 'OUTCOME',
-          'outcome': 'ERROR',
-          'stack': 'Syntax error at line %d: %s\n<pre>%s</pre>' % (line, details, hint)
-        }])
-        break
-    else:
-      output = RunSimulation(spec)
     self.wfile.write(output)
     self.wfile.close()
 
@@ -69,4 +76,5 @@ def Main():
   httpd = BaseHTTPServer.HTTPServer(server_address, ServerHandler)
   httpd.serve_forever()
 
-Main()
+if __name__ == '__main__':
+  Main()

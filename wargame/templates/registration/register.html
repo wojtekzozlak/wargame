@@ -1,0 +1,16 @@
+{% extends "registration/layout.html" %}
+
+{% block body %}
+  <form method="post">
+    <table class="table well">
+      {% csrf_token %}
+      {{ form.as_table }}
+      <tr>
+        <th></th><td>
+          <input type="submit" class="btn btn-primary" value="register"/>
+        </td>
+      </tr>
+    </table>
+    Already have an account? <a href="{% url 'login' %}">Log in</a>.
+  </form>
+{% endblock %}

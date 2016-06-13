@@ -1,0 +1,41 @@
+{
+  "GetEnemiesCount": {
+    "comment": "Returns a count of the enemy ships."
+  },
+  "GetRelativeAngle": {
+    "comment": "Returns an angle between your ship and given enemy ship.",
+    "args": {
+      "index": "An integer."
+    }
+  },
+  "GetDistance": {
+    "comment": "Returns distance between your ship and given enemy ship.",
+    "args": {
+      "index": "An integer."
+    }
+  },
+  "Shoot": {
+    "comment": "Shoots a rocket (if ammo is available).",
+    "args": {
+      "index": "An integer."
+    }
+  },
+  "GetCurrentSpeed": {
+    "comment": "Returns current speed of your ship."
+  },
+  "GetCurrentAngle": {
+    "comment": "Returns a current angle of your ship (relative to north)."
+  },
+  "SetTargetSpeed": {
+    "comment": "Sets a target speed of your ship.",
+    "args": {
+      "new_speed": "An integer."
+    }
+  },
+  "SetTargetAngle": {
+    "comment": "Sets a target angle of your ship",
+    "args": {
+      "new_angle": "An integer."
+    }
+  }
+}

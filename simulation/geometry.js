@@ -78,8 +78,6 @@ Poly.prototype.IsCrossing = function(other) {
   for (var i = 0; i < segments_a.length; ++i) {
     for (var j = 0; j < segments_b.length; ++j) {
       if (CrossingLineSegments(segments_a[i], segments_b[j])) {
-        console.error(segments_a[i]);
-        console.error(segments_b[j]);
         return true;
       }
     } 
