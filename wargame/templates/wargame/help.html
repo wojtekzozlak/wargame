@@ -1,5 +1,19 @@
 {% load markdown_deux_tags %}
-
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <style type="text/css">
+      body {
+        font-family: Verdana;
+        padding: 0px 100px;
+      }
+      code {
+        color: #08756a;
+      }
+    </style>
+  </head>
+  <body>
 {% markdown %}
 
 Manual
@@ -19,8 +33,7 @@ Ships
 Each ship has the same parameters:
 
 * Can turn up to 90 degress per second.
-* Can change its velocity up to 25 units per second. Curently there is speed
-  is not limited.
+* Can change its velocity up to 25 units per second. Max speed is 200 units per second.
 * Can shoot 1 rocket per second.
 
 Rockets
@@ -94,4 +107,5 @@ Method reference
 {% endfor %}
 
 {% endmarkdown %}
-
+  </body>
+</html>

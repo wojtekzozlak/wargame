@@ -1,13 +1,13 @@
 var _AI_LIST_TEMPLATE = ' \
   Your pilots:<br/> \
-  <ul> \
+  <div class="list-group"> \
   {{for ais ~selected=selected}} \
-    <li data-id="{{:id}}"{{if id == ~selected}} class="selected"{{/if}}>{{:name}}</li> \
+    <a href="javascript: false;" data-id="{{:id}}" class="list-group-item {{if id == ~selected}}active{{/if}}">{{:name}}</a> \
   {{/for}} \
-  </ul> \
+  </div> \
   ';
 
-var AiList = function(container, pick_callback) {
+var AiList = function(container, pick_callback, list_change_callback) {
   this._container = container
   this._template = $.templates(_AI_LIST_TEMPLATE);
   this._context = {
@@ -15,6 +15,7 @@ var AiList = function(container, pick_callback) {
     selected: undefined
   };
   this._pick_callback = pick_callback;
+  this._list_change_callback = list_change_callback || function() {};
 };
 AiList.prototype._PickAi = function(ai_id) {
   this._context.selected = ai_id;
@@ -40,7 +41,7 @@ AiList.prototype._GetLogic = function(ai_id) {
 AiList.prototype.Render = function() {
   this._container.html(this._template.render(this._context));
   var pick_fn = $.proxy(this._PickAi, this);
-  $('li', this._container).click(function() {
+  $('a', this._container).click(function() {
     pick_fn(this.dataset.id);
   });
 };
@@ -61,11 +62,11 @@ AiList.prototype.Update = function() {
         this._context.selected = undefined;
         this._pick_callback({name: '', logic: ''});
       }
+      this._list_change_callback();
       this.Render();
     }, this),
     dataType: 'json'
   }).fail(function(xhr, text_status) {
-    loading_popup.Destroy();
     Popup.Spawn('Unable to refresh list of AIs :(', Popup.ERROR, 2000);
   });
 };
@@ -82,7 +83,7 @@ var _EDITOR_SETTINGS = {
   showTrailingSpace: true
 };
 
-var AiEditor = function(container) {
+var AiEditor = function(container, list_change_callback) {
   this._container = container;
   this._original_data = {name: '', logic: ''}
 
@@ -94,7 +95,8 @@ var AiEditor = function(container) {
   $(this._ai_name_input).keyup($.proxy(this.Render, this));
 
   this._ai_list = new AiList($('div.ai-list', this._container),
-                             $.proxy(this._SetLogic, this));
+                             $.proxy(this._SetLogic, this),
+                             list_change_callback);
 
   $('input.discard', this._container).click($.proxy(this._DiscardChanges, this));
   $('input.save', this._container).click($.proxy(this._Save, this));
@@ -177,7 +179,7 @@ AiEditor.prototype._Delete = function() {
   });
 };
 AiEditor.prototype._DiscardChanges = function() {
-  this._SetLogic({logic: this._original_logic});
+  this._SetLogic(this._original_data);
 };
 AiEditor.prototype.Render = function() {
   var editor_disabled = this._ai_list.GetSelected() == undefined;

@@ -105,6 +105,7 @@ Log.prototype.logMessage = function(source, msg, severity) {
     msg: msg
   });
   this._events.append(new_msg);
+  this._events.scrollTop(this._events[0].scrollHeight);
 };
 
 
@@ -154,9 +155,18 @@ PlayersPicker.prototype.Refresh = function() {
   });
 };
 PlayersPicker.prototype.Render = function() {
+  var player_a_selection = this._player_a.val();
+  var player_b_selection = this._player_b.val();
+  this._UpdateSelect(this._player_a, player_a_selection);
+  this._UpdateSelect(this._player_b, player_b_selection);
+};
+PlayersPicker.prototype._UpdateSelect = function(ai_select, selected) {
+  ai_select.empty();
   $.each(this._ais_list, $.proxy(function(index, ai) {
     var option = $('<option></option>').attr('value', ai.id).text(ai.name);
-    this._player_a.append(option.clone());
-    this._player_b.append(option.clone());
+    if (ai.id == selected) {
+      option.attr('selected', true);
+    }
+    ai_select.append(option.clone());
   }, this));
-};
+}

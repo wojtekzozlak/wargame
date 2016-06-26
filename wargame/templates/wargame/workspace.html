@@ -26,16 +26,24 @@
         border: solid 1px black;
         background-color: gray;
         display: table-cell;
+        position: relative;
       }
       .board canvas {
         width: 100%;
         height: 100%;
       }
-      .side-panel {
+      .board div.board-controls {
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
+        text-align: right;
+      }
+      .simulation .side-panel {
         width: 250px;
         border: solid 1px black;
         display: table-cell;
         vertical-align: top;
+        padding: 15px;
       }
       #log {
         padding: 10px;
@@ -44,6 +52,7 @@
         color: red;
       }
       div#popups {
+        z-index: 999;
         position: absolute;
         top: 10%;
         left: 10%;
@@ -77,16 +86,16 @@
         color: #A99;
       }
 
+      div#editor div.side-panel {
+        margin-left: 20px;
+        display: inline-block;
+      }
       div.ai-list {
-        border: solid 1px black;
         display: inline-block;
       }
       div.ai-list ul {
         list-style: none;
         padding: 0px;
-      }
-      div.ai-list li:hover {
-        background-color: gray;
       }
       div.ai-list li.selected {
         background-color: yellow;
@@ -109,6 +118,16 @@
         width: 200px;
         margin: 5px;
       }
+      select.form-control {
+        width: auto;
+      }
+      div#log ul.events {
+        list-style-type: square;
+        height: 100px;
+        overflow: auto;
+        padding-top: 2px;
+       padding-bottom: 2px;
+      }
     </style>
   </head>
   <body>
@@ -119,7 +138,12 @@
 <div id="popups"></div>
 <div class="simulation">
   <div class="board">
-    <canvas id="game"></canvas>
+    <canvas class="game"></canvas>
+    <div class="board-controls">
+      <div class="status"></div>
+      <input type="button" class="zoom-in btn btn-success" value="+"/>
+      <input type="button" class="zoom-out btn btn-success" value="-"/>
+    </div>
   </div>
   <div class="side-panel">
     <div id="controls">
@@ -129,11 +153,11 @@
     </div>
     <div id="log">
       <div class="timer"></div>
-      <ul class="events"></ul>
+      <ul class="events well"></ul>
     </div>
     <div id="players-picker">
-      Player A: <select class="player-a"></select><br/>
-      Player B: <select class="player-b"></select><br/>
+      Player A: <select class="player-a form-control"></select><br/>
+      Player B: <select class="player-b form-control"></select><br/>
       <input type="button" value="compile and run" class="compile btn btn-primary" title="play"/>
     </div>
   </div>
@@ -141,40 +165,118 @@
 <div id="editor">
   <input type="text" class="ai-name form-control"/>
   <div class="ai-editor"></div>
-  <div class="ai-list"></div><br/>
-  <div>
-  <input type="text" class="new-ai form-control" placeholder="ai name"/>
-  <input type="button" class="add btn btn-primary" value="add"/><br/>
-  <input type="button" class="save btn btn-success" value="save"/>
-  <input type="button" class="discard btn btn-warning" value="discard changes"/>
-  <input type="button" class="delete btn btn-danger" value="delete"/>
+  <div class="side-panel">
+    <div class="ai-list"></div><br/>
+    <div>
+      <input type="text" class="new-ai form-control" placeholder="ai name"/>
+      <input type="button" class="add btn btn-primary" value="add"/><br/>
+      <input type="button" class="save btn btn-success" value="save"/>
+      <input type="button" class="discard btn btn-warning" value="discard changes"/>
+      <input type="button" class="delete btn btn-danger" value="delete"/>
+    </div>
+  </div>
 </div>
 
    	<script>
 
 
-var editor = new AiEditor($('div#editor'));
 
-var resizeGui = function() {
-  var canvas = $('.board canvas');
-  canvas.attr('width', parseInt(canvas.css('width')));
-  canvas.attr('height', parseInt(canvas.css('height')));
+var PanHandler = function(obj, move_callback) {
+  this._moveCallback = move_callback;
+  this._offset = [0, 0];
+  this._startPosition = null;
+  this._enabled = false;
+
+  // TODO(wzoltak): Clean this up.
+  $(obj).mousedown($.proxy(function(event) {
+    this._startPosition = [event.clientX, event.clientY];
+  }, this));
+  $(obj).mousemove($.proxy(function(event) {
+    if (this._startPosition == null) {
+      return false;
+    }
+    var new_offset = this._GetNewOffset(event);
+    this._moveCallback(new_offset[0], new_offset[1]);
+    // Disable text selection by cancelling the event.
+    return false;
+  }, this));
+  
+  $(obj).mouseout($.proxy(function(event) {
+    if (this._startPosition == null) {
+      return false;
+    }
+    this._offset = this._GetNewOffset(event);
+    this._startPosition = null;
+    return false;
+  }, this));
+  $(obj).mouseup($.proxy(function(event) {
+    if (this._startPosition == null) {
+      return false;
+    }
+    this._offset = this._GetNewOffset(event);
+    this._startPosition = null;
+  }, this));
+};
+PanHandler.prototype._GetNewOffset = function(event) {
+  var delta_x = event.clientX - this._startPosition[0];
+  var delta_y = event.clientY - this._startPosition[1];
+  return [this._offset[0] + delta_x, this._offset[1] + delta_y];
 };
 
-
-
-var Visualization = function(canvas, log) {
-  this._canvas = canvas;
+var Visualization = function(board, log) {
+  this._board = board;
+  this._canvas = $('canvas.game', board)[0];
   this._renderers = {};
   this._log = log;
+  this._zoomFactor = 1;
+  this._translation = [0, 0];
+  this._lastFrame = null;
+
+  var pan = new PanHandler(this._canvas, $.proxy(function(x, y) {
+    this._translation = [x, y];
+    this.refresh();
+  }, this));
+
+  $('.zoom-in', board).click($.proxy(this._zoomIn, this));
+  $('.zoom-out', board).click($.proxy(this._zoomOut, this));
+  $(this._canvas).bind('mousewheel', $.proxy(function(event) {
+    var wheel_delta = event.originalEvent.wheelDelta;
+    if (wheel_delta > 0) {
+      this._zoomIn();
+    } else {
+      this._zoomOut();
+    }
+    event.stopPropagation();
+    return false;
+  }, this));
+
+  this.refresh();
+};
+Visualization.prototype._zoomIn = function() {
+  this._zoomFactor *= 1.1;
+  this.refresh();
+};
+Visualization.prototype._zoomOut = function() {
+  this._zoomFactor *= 0.9;
+  this._zoomFactor = Math.max(this._zoomFactor, 0.2);
+  this.refresh();
+};
+Visualization.prototype.refresh = function() {
+  var zoom_factor_txt = 'zoom: ' + this._zoomFactor.toFixed(2);
+  var offset_txt = 'x: ' + this._translation[0] + ' y:' + this._translation[1];
+  $('div.status', this._board).html(zoom_factor_txt + '<br/>' + offset_txt);
+  if (this._lastFrame != null) {
+    this.renderFrame(this._lastFrame);
+  }
 };
 Visualization.prototype.renderFrame = function(frame) {
+  this._lastFrame = frame;
   var ctx = this._canvas.getContext("2d");
   ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
   ctx.save();
-  ctx.translate(Math.floor(this._canvas.width / 2),
-                Math.floor(this._canvas.height / 2));
-  ctx.scale(0.5, 0.5);
+  ctx.translate(Math.floor(this._canvas.width / 2) + this._translation[0],
+                Math.floor(this._canvas.height / 2) + this._translation[1]);
+  ctx.scale(0.5 * this._zoomFactor, 0.5 * this._zoomFactor);
 
   for (var i = 0; i < frame.length; ++i) {
     var object = frame[i];
@@ -195,6 +297,7 @@ Visualization.prototype.registerRenderer = function(type_id, renderer) {
   this._renderers[type_id] = renderer;
 };
 Visualization.prototype.clearCanvas = function() {
+  this._lastFrame = null;
   var ctx = this._canvas.getContext("2d");
   ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
 };
@@ -221,7 +324,7 @@ var rocketRenderer = function(ctx) {
 }
 
 var log = new Log($('#log').get(0));
-var viz = new Visualization(document.getElementById("game"), log);
+var viz = new Visualization($('.board'), log);
 viz.registerRenderer('SHIP', shipRenderer);
 viz.registerRenderer('ROCKET', rocketRenderer);
 
@@ -235,43 +338,20 @@ var ShowFrame = function(i) {
 };
 
 var players_picker = new PlayersPicker($('#players-picker'), controls);
-players_picker.Refresh();
+var editor = new AiEditor($('div#editor'),
+                          $.proxy(players_picker.Refresh, players_picker));
 
-var timer_id = null;
-var run = function() {
-  clearTimeout(timer_id);
 
-  var spec = {
-    maxDurationMs: 10000,
-    players: [{
-      name: 'PlayerA',
-      logic: editor_1.getValue()
-    }, {
-      name: 'PlayerB',
-      logic: editor_2.getValue()
-    }]
-  };
-
-  var processing_popup = new Popup('processing...');
-  log.setTime(0);
-  $.post({
-    url: 'http://' + window.location.hostname + ':8081',
-    data: JSON.stringify(spec),
-    crossDomain: true,
-    success: function(response) {
-      frames = response;
-      processing_popup.Destroy();
-      controls.setFrames(response);
-      controls.play();
-    },
-    dataType: 'json'}).fail(function(xhr, text_status) {
-      processing_popup.Destroy();
-      Popup.Spawn('Something went wrong :(', Popup.ERROR, 2000);
-    });
+var resizeGui = function() {
+  var canvas = $('.board canvas');
+  canvas.attr('width', parseInt(canvas.css('width')));
+  canvas.attr('height', parseInt(canvas.css('height')));
+  viz.refresh();
 };
 
 $(document).ready(resizeGui);
 $(window).resize(resizeGui);
+
   	</script>
   </body>
 </html>

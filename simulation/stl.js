@@ -1,6 +1,18 @@
 
 var Stl = function(env) {
   return {
+    /* Utility. */
+    'Log': {
+      'docs': {
+        'comment': 'Logs given string.',
+        'args': {
+          'message': 'A string.'
+        }
+      },
+      'def': function(message) {
+        env._util.messages.push(message);
+      }
+    },
     /* Sensor functions. */
     'GetEnemiesCount': {
       'docs': {

@@ -43,6 +43,10 @@ Simulation.prototype._detectCollisions = function() {
 
     // Or maybe it collided with other objects?
     for (var j = i + 1; j < this._objects.length; ++j) {
+      if (this._objects[i].getProperties().faction ==
+          this._objects[j].getProperties().faction) {
+        continue;
+      }
       var geo_a = this._objects[i].getGeometry();
       var geo_b = this._objects[j].getGeometry();
       // Replace intersection of hitboxes.

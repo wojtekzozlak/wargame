@@ -67,10 +67,10 @@ SimulationObject.prototype.distance = function(other) {
 };
 
 
-var Rocket = function(positionX, positionY, angle) {
+var Rocket = function(positionX, positionY, angle, faction) {
   var g = new geometry.Poly([new geometry.Point(-2, 10), new geometry.Point(2, 10),
                              new geometry.Point(2, -10), new geometry.Point(-2, -10)]);
-  SimulationObject.call(this, positionX, positionY, angle, /*speed=*/400, /*faction=*/null,
+  SimulationObject.call(this, positionX, positionY, angle, /*speed=*/400, faction,
                         g);
   this._lifeTime = 1500;
 };
@@ -92,7 +92,6 @@ Ship = function(positionX, positionY, angle, logic, faction) {
   SimulationObject.call(this, positionX, positionY, angle, /*speed=*/0, faction, g);
   this._logic = new vm.Script(logic, { displayErrors: true, filename: 'ai.js' });
   this._context = new vm.createContext({ initialized: false });
-  this._context['messages'] = [];
   utils.ExtendDict(this._context, stl.GetStlFunctions(this._context));
   this._modules = {};
 };
@@ -106,6 +105,9 @@ Ship.prototype.computeStep = function(time_delta) {
 };
 Ship.prototype._getInnerProperties = function() {
   var properties = {};
+  properties._util = {
+    messages: []
+  };
   for (var module_name in this._modules) {
     utils.ExtendDict(properties, this._modules[module_name].getProperties());  
   }
@@ -125,10 +127,9 @@ Ship.prototype.reconfigure = function() {
   for (var module_name in this._modules) {
     this._modules[module_name].loadProperties(this._context);
   }
-  for (var i = 0; i < this._context['messages'].length; ++i) {
-    this._emitMessage(this._context['messages'][i]);
+  for (var i = 0; i < this._context._util.messages.length; ++i) {
+    this._emitMessage(this._context._util.messages[i]);
   }
-  this._context['messages'] = [];
 };
 
 
@@ -151,6 +152,7 @@ var EngineModule = function() {
   this._targetSpeed = 0;
 };
 EngineModule.prototype = Object.create(ShipModule.prototype);
+EngineModule.prototype.MAX_SHIP_SPEED = 200;
 EngineModule.prototype.wireShip = function(ship) {
   ShipModule.prototype.wireShip.call(this, ship);
   this._targetAngle = ship._angle;
@@ -159,7 +161,7 @@ EngineModule.prototype.wireShip = function(ship) {
 EngineModule.prototype.getProperties = function() {
   return {
     '_engine': {
-      currentSpeed: this._ship_speed,
+      currentSpeed: this._ship._speed,
       targetSpeed: this._targetSpeed,
       currentAngle: this._ship._angle,
       targetAngle: this._targetAngle
@@ -183,6 +185,7 @@ EngineModule.prototype._adjustAngle = function(time_delta) {
   this._ship._angle %= 360
   var desired_speed_change = this._targetSpeed - this._ship._speed;
   this._ship._speed += this._throttledChange(time_delta, this._acceleration, desired_speed_change);
+  this._ship._speed = Math.max(this._ship._speed, this.MAX_SHIP_SPEED);
 };
 EngineModule.prototype._throttledChange = function(time_delta, change_speed, desired_change) {
   var max_change = change_speed * time_delta / 1000;
@@ -215,10 +218,11 @@ WeaponModule.prototype.loadProperties = function(env) {
   if (env._weapon.shoot && this._ammoAvailable()) {
     this._time_since_last_shot = 0;
     var ship_properties = this._ship.getProperties();
-    var offset = utils.RotateVector(0, 30, ship_properties.angle);
+    var offset = utils.RotateVector(0, 10, ship_properties.angle);
     this._simulation.addObject(new Rocket(ship_properties.x + offset.x,
                                           ship_properties.y + offset.y,
-                                          ship_properties.angle));
+                                          ship_properties.angle,
+                                          ship_properties.faction));
   }
 };
 WeaponModule.prototype.computeStep = function(time_delta) {

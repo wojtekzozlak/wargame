@@ -60,13 +60,14 @@ var RunSimulation = function (data) {
     });
   }
   var result = { type: 'OUTCOME' };
+  var factions_alive = sim.factionsAlive();
   if (error) {
     result.outcome = 'ERROR';
     result.faction = error.faction;
     result.stack = error.stack;
-  } else if(sim.finished()) {
+  } else if(sim.finished() && factions_alive.length == 1) {
     result.outcome = 'WINNER';
-    result.faction = sim.factionsAlive()[0];
+    result.faction = factions_alive[0];
   } else {
     result.outcome = 'TIE';
   }
