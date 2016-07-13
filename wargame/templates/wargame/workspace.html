@@ -8,6 +8,9 @@
     <script src="{% static "js/visualization.js" %}"></script>
     <script src="http://www.jsviews.com/download/jsrender.js"></script>
     <link href="{% static "bootstrap/css/bootstrap.min.css" %}" rel="stylesheet">
+    <link href="{% static "bootstrap/css/bootstrap-tour.min.css" %}" rel="stylesheet">
+    <script src="{% static "bootstrap/js/bootstrap.min.js" %}"></script>
+    <script src="{% static "bootstrap/js/bootstrap-tour.min.js" %}"></script>
     <link href="{% static "codemirror/codemirror.css" %}" rel="stylesheet">
     <script src="{% static "codemirror/codemirror.js" %}"></script>
     <script src="{% static "codemirror/mode/javascript/javascript.js" %}"></script>
@@ -15,6 +18,7 @@
     <script src="{% static "codemirror/addon/edit/trailingspace.js" %}"></script>
 
     <script src="{% static "js/ai_editor.js" %}"></script>
+    <script src="{% static "js/workspace-tour.js" %}"></script>
     <style>
       .simulation {
         display: table;
@@ -132,7 +136,8 @@
   </head>
   <body>
 <div id="top-bar">
-  <a href="{% url 'help' %}">manual</a> |
+  <a href="{% url 'help' %}" class="manual">manual</a> |
+  <a href="javascript: ReplayTour(); false" class="tour">take the tour</a> |
   logged as: {{ request.user.username }} <a href="{% url 'logout' %}?next=/">log out</a>
 </div>
 <div id="popups"></div>
@@ -167,7 +172,7 @@
   <div class="ai-editor"></div>
   <div class="side-panel">
     <div class="ai-list"></div><br/>
-    <div>
+    <div class="controls">
       <input type="text" class="new-ai form-control" placeholder="ai name"/>
       <input type="button" class="add btn btn-primary" value="add"/><br/>
       <input type="button" class="save btn btn-success" value="save"/>
@@ -269,14 +274,21 @@ Visualization.prototype.refresh = function() {
     this.renderFrame(this._lastFrame);
   }
 };
+// TODO(wzoltak): Clean this up.
+var img = new Image();
+img.src = '{% static "sky.jpg" %}';
 Visualization.prototype.renderFrame = function(frame) {
   this._lastFrame = frame;
+  
   var ctx = this._canvas.getContext("2d");
+  var ptrn = ctx.createPattern(img, 'repeat');
   ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
+  ctx.fillStyle = ptrn;
   ctx.save();
   ctx.translate(Math.floor(this._canvas.width / 2) + this._translation[0],
                 Math.floor(this._canvas.height / 2) + this._translation[1]);
   ctx.scale(0.5 * this._zoomFactor, 0.5 * this._zoomFactor);
+  ctx.fillRect(-25000, -25000, 50000, 50000);
 
   for (var i = 0; i < frame.length; ++i) {
     var object = frame[i];
@@ -311,11 +323,11 @@ var shipRenderer = function(ctx) {
   ctx.closePath();
   ctx.fill();
 
-  ctx.beginPath();
-  ctx.moveTo(0, -500);
-  ctx.lineTo(0, 500);
-  ctx.closePath();
-  ctx.stroke();
+/*  ctx.beginpath();
+  ctx.moveto(0, -500);
+  ctx.lineto(0, 500);
+  ctx.closepath();
+  ctx.stroke();*/
 }
 
 var rocketRenderer = function(ctx) {
@@ -351,6 +363,19 @@ var resizeGui = function() {
 
 $(document).ready(resizeGui);
 $(window).resize(resizeGui);
+
+var tour = CreateTour();
+
+// Initialize the tour
+tour.init();
+
+// Start the tour
+tour.start();
+
+function ReplayTour() {
+  tour.start(/*force=*/true);
+  tour.goTo(0);
+}
 
   	</script>
   </body>

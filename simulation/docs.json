@@ -1,4 +1,10 @@
 {
+  "Log": {
+    "comment": "Logs given string.",
+    "args": {
+      "message": "A string."
+    }
+  },
   "GetEnemiesCount": {
     "comment": "Returns a count of the enemy ships."
   },
@@ -15,10 +21,10 @@
     }
   },
   "Shoot": {
-    "comment": "Shoots a rocket (if ammo is available).",
-    "args": {
-      "index": "An integer."
-    }
+    "comment": "Shoots a rocket (if ammo is available)."
+  },
+  "GetAvailableAmmo": {
+    "comment": "Returns a number of available rockets."
   },
   "GetCurrentSpeed": {
     "comment": "Returns current speed of your ship."

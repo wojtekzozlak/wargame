@@ -48,12 +48,17 @@ var Stl = function(env) {
     'Shoot': {
       'docs': {
         'comment': 'Shoots a rocket (if ammo is available).',
-        'args': {
-          'index': 'An integer.'
-        }
       },
-      'def': function(index) {
+      'def': function() {
         env._weapon.shoot = true;
+      }
+    },
+    'GetAvailableAmmo': {
+      'docs': {
+        'comment': 'Returns a number of available rockets.',
+      },
+      'def': function() {
+        return env._weapon.ammoAvailable ? 1 : 0;
       }
     },
     /* Engine module. */
