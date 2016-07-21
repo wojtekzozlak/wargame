@@ -137,7 +137,7 @@
   <body>
 <div id="top-bar">
   <a href="{% url 'help' %}" class="manual">manual</a> |
-  <a href="javascript: ReplayTour(); false" class="tour">take the tour</a> |
+  <a href="#" onclick="ReplayTour(); return false" class="tour">take the tour</a> |
   logged as: {{ request.user.username }} <a href="{% url 'logout' %}?next=/">log out</a>
 </div>
 <div id="popups"></div>
@@ -244,8 +244,8 @@ var Visualization = function(board, log) {
 
   $('.zoom-in', board).click($.proxy(this._zoomIn, this));
   $('.zoom-out', board).click($.proxy(this._zoomOut, this));
-  $(this._canvas).bind('mousewheel', $.proxy(function(event) {
-    var wheel_delta = event.originalEvent.wheelDelta;
+  $(this._canvas).bind('mousewheel wheel', $.proxy(function(event) {
+    var wheel_delta = event.originalEvent.wheelDelta || event.originalEvent.deltaY * -1; 
     if (wheel_delta > 0) {
       this._zoomIn();
     } else {
@@ -356,8 +356,9 @@ var editor = new AiEditor($('div#editor'),
 
 var resizeGui = function() {
   var canvas = $('.board canvas');
-  canvas.attr('width', parseInt(canvas.css('width')));
-  canvas.attr('height', parseInt(canvas.css('height')));
+  var board = $('.board');
+  canvas.attr('width', parseInt(board.css('width')));
+  canvas.attr('height', parseInt(board.css('height')));
   viz.refresh();
 };
 

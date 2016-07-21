@@ -2,7 +2,7 @@ var _AI_LIST_TEMPLATE = ' \
   Your pilots:<br/> \
   <div class="list-group"> \
   {{for ais ~selected=selected}} \
-    <a href="javascript: false;" data-id="{{:id}}" class="list-group-item {{if id == ~selected}}active{{/if}}">{{:name}}</a> \
+    <a href="#" onclick="return false;" data-id="{{:id}}" class="list-group-item {{if id == ~selected}}active{{/if}}">{{:name}}</a> \
   {{/for}} \
   </div> \
   ';
