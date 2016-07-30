@@ -10,38 +10,27 @@ var Stl = function(env) {
         }
       },
       'def': function(message) {
-        env._util.messages.push(message);
+        if (message == undefined) {
+          message = 'undefined';
+        } else if (message == null) {
+          message = 'null';
+        }
+        env._util.messages.push(JSON.stringify(message));
       }
     },
     /* Sensor functions. */
-    'GetEnemiesCount': {
+    'GetEnemies': {
       'docs': {
-        'comment': 'Returns a count of the enemy ships.'
+        'comment': ['Returns a list of enemies. Each entry is an object with following properties:',
+                    '',
+                    ' * `angle` - an absolute angle of the enemy.',
+                    ' * `relativeAngle` - an angle relative of to the Player\'s ship.',
+                    ' * `speed` - an absolute speed of the enemy.',
+                    ' * `distance` - a distance between enemy and the Player\'s ship.',
+                    ' * `type` - a type of the enemy (either `SHIP` or `ROCKET`).'].join('\n')
       },
       'def': function() {
-        return env._sensor.enemies.length
-      }
-    },
-    'GetRelativeAngle': {
-      'docs': {
-        'comment': 'Returns an angle between your ship and given enemy ship.',
-        'args': {
-          'index': 'An integer.'
-        }
-      },
-      'def': function(index) {
-        return env._sensor.relativeAngles[index];
-      }
-    },
-    'GetDistance': {
-      'docs': {
-        'comment': 'Returns distance between your ship and given enemy ship.',
-        'args': {
-          'index': 'An integer.'
-        }
-      },
-      'def': function(index) {
-        return env._sensor.distances[index];
+        return env._sensor.enemies;
       }
     },
     /* Weapon functions. */
@@ -97,6 +86,7 @@ var Stl = function(env) {
         }
       },
       'def': function(new_angle) {
+        // Normalize the angle, so that 0 is pointing North.
         env._engine.targetAngle = new_angle;
       }
     }

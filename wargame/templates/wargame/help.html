@@ -49,27 +49,35 @@ Code samples
 Flying in a circle and shooting
 --------------------------------
 
-    // Initial speed is always 0.
-    SetTargetSpeed(200);
+    // Initial speed is always 100.
     SetTargetAngle(GetCurrentAngle() + 90);
     Shoot();
 
 Following the enemy
 -------------------
 
-    SetTargetSpeed(100);
-    SetTargetAngle(GetCurrentAngle() + GetRelativeAngle(0));
-
+    var enemies = GetEnemies();
+    SetTargetAngle(GetCurrentAngle() + enemies[0].relativeAngle);
+                                   
 Running away from the enemy
-----------------------
+---------------------------
 
-    SetTargetSpeed(200);
-    SetTargetAngle(GetCurrentAngle() + GetRelativeAngle(0) + 180);
+    var enemies = GetEnemies();
+    SetTargetAngle(GetCurrentAngle() + enemies[0].relativeAngle + 180);
+
+Shooting when enemy is close
+----------------------------
+
+    var enemies = GetEnemies();
+    SetTargetAngle(GetCurrentAngle() + enemies[0].relativeAngle);
+    if (enemies[0].distance < 200) {
+      Shoot();
+    }
+
 
 Flying randomly
 ----------------
 
-    SetTargetSpeed(200);
     SetTargetAngle(GetCurrentAngle() + (Math.random() * 40 - 20));
 
 Persistent state between iterations

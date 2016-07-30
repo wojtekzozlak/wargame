@@ -29,5 +29,7 @@ urlpatterns = [
     url(r'^accounts/post_register', views.post_register, name='post_register'),
     url(r'^accounts/', include('django.contrib.auth.urls')),
     url(r'^help', views.help, name='help'),
+    url(r'^matches_list', views.matches_list, name='matches_list'),
+    url(r'^match_replay/([0-9]+)/$', views.match_replay, name='match_replay'),
     url(r'^$', views.workspace, name='workspace'),
 ]

@@ -5,20 +5,8 @@
       "message": "A string."
     }
   },
-  "GetEnemiesCount": {
-    "comment": "Returns a count of the enemy ships."
-  },
-  "GetRelativeAngle": {
-    "comment": "Returns an angle between your ship and given enemy ship.",
-    "args": {
-      "index": "An integer."
-    }
-  },
-  "GetDistance": {
-    "comment": "Returns distance between your ship and given enemy ship.",
-    "args": {
-      "index": "An integer."
-    }
+  "GetEnemies": {
+    "comment": "Returns a list of enemies. Each entry is an object with following properties:\n\n * `angle` - an absolute angle of the enemy.\n * `relativeAngle` - an angle relative of to the Player's ship.\n * `speed` - an absolute speed of the enemy.\n * `distance` - a distance between enemy and the Player's ship.\n * `type` - a type of the enemy (either `SHIP` or `ROCKET`)."
   },
   "Shoot": {
     "comment": "Shoots a rocket (if ammo is available)."

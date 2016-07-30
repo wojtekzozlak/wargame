@@ -89,7 +89,7 @@ Rocket.prototype._typeId = ObjectType.ROCKET;
 Ship = function(positionX, positionY, angle, logic, faction) {
   var g = new geometry.Poly([new geometry.Point(0, 15), new geometry.Point(10, -15),
                              new geometry.Point(-10, -15)]);
-  SimulationObject.call(this, positionX, positionY, angle, /*speed=*/0, faction, g);
+  SimulationObject.call(this, positionX, positionY, angle, /*speed=*/100, faction, g);
   this._logic = new vm.Script(logic, { displayErrors: true, filename: 'ai.js' });
   this._context = new vm.createContext({ initialized: false });
   utils.ExtendDict(this._context, stl.GetStlFunctions(this._context));
@@ -120,7 +120,7 @@ Ship.prototype.registerModule = function(name, module) {
 Ship.prototype.reconfigure = function() {
   var env = this._getInnerProperties();
 
-  utils.ExtendDict(this._context, env)
+  utils.ExtendDict(this._context, env);
   this._logic.runInContext(this._context);
   this._context.initialized = true;
  
@@ -185,7 +185,7 @@ EngineModule.prototype._adjustAngle = function(time_delta) {
   this._ship._angle %= 360
   var desired_speed_change = this._targetSpeed - this._ship._speed;
   this._ship._speed += this._throttledChange(time_delta, this._acceleration, desired_speed_change);
-  this._ship._speed = Math.max(this._ship._speed, this.MAX_SHIP_SPEED);
+  this._ship._speed = Math.min(this._ship._speed, this.MAX_SHIP_SPEED);
 };
 EngineModule.prototype._throttledChange = function(time_delta, change_speed, desired_change) {
   var max_change = change_speed * time_delta / 1000;
@@ -236,18 +236,21 @@ var SensorModule = function(simulation) {
 };
 SensorModule.prototype = Object.create(ShipModule.prototype);
 SensorModule.prototype.getProperties = function() {
-  var enemies = this._getEnemyShips();
-  var relative_angles = [];
-  var distances = [];
-  for (var i = 0; i < enemies.length; ++i) {
-    relative_angles.push(this._relativeAngle(enemies[i]));
-    distances.push(this._ship.distance(enemies[i]));
+  var enemy_ships = this._getEnemyShips();
+  var enemy_stats = [];
+  for (var i = 0; i < enemy_ships.length; ++i) {
+    var enemy = enemy_ships[i];
+    var stats = {};
+    stats.angle = enemy._angle
+    stats.relativeAngle = this._relativeAngle(enemy);
+    stats.speed = enemy._speed;
+    stats.distance = this._ship.distance(enemy);
+    stats.type = enemy._typeId
+    enemy_stats.push(stats);
   }
   return {
     '_sensor': {
-      'enemies' : enemies,
-      'relativeAngles': relative_angles,
-      'distances': distances
+      'enemies' : enemy_stats,
     }
   }
 };

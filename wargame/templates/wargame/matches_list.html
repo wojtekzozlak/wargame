@@ -1,0 +1,34 @@
+{% extends 'wargame/index.html' %}
+
+{% block body %}
+<div style="padding: 20px;">
+  <h2>Historical matches</h2>
+
+  <table class="historical-matches table table-striped table-hover">
+    <tbody>
+      <tr>
+        <th>AI Name</th>
+        <th>Opponent's AI Name</th>
+        <th>Opponent's Name</th>
+        <th>Date</th>
+        <th>Outcome</th>
+      </tr>
+			{% if not items %}
+        <tr>
+          <td colspan="5">No ranking matches to display.</td>
+        </tr>
+		  {% endif %}
+      {% for item in items %}
+        <tr onclick="window.location = '{% url 'match_replay' item.id %}'">
+          <td>{{ item.player_ai_name}}</td>
+          <td>{{ item.opponent_ai_name }}</td>
+          <td>{{ item.opponent_name }}</td>
+          <td>{{ item.date_time }}</td>
+          <td>{{ item.outcome }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}

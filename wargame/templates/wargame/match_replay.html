@@ -1,0 +1,48 @@
+{% extends 'wargame/index.html' %}
+
+{% block body %}
+  <table class="match-replay">
+    <tr>
+      <td>
+        <span class="ai-name {% if match.outcome == 'player_a_won' %}winner{% endif %}">{{ match.ai_a.name }}<br/>
+        <span class="player">({{ match.ai_a.user.username }})</a>
+      </td>
+      <td class="vs">vs</td>
+      <td>
+        <span class="ai-name {% if match.outcome == 'player_b_won' %}winner{% endif %}">{{ match.ai_b.name }}<br/>
+        <span class="player">({{ match.ai_b.user.username }})</a>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="3" class="outcome">Outcome: {{ outcome }}</td>
+    </tr>
+    <tr>
+      <td colspan="3" class="date">{{ match.date_time }}</td>
+    </tr>
+  </table>
+
+  {% include 'wargame/simulation.html' %}
+  <script type="text/javascript">
+    var log = new Log($('#log').get(0));
+    var viz = CreateVisualization($('.board'), log);
+    var controls = new Controls($('#controls'), viz, log);
+    var frames = JSON.parse('{{ match.course|safe }}');
+    controls.setFrames(frames);
+
+    var resizeGui = function() {
+      var canvas = $('.board canvas');
+      var board = $('.board');
+      var simulation = $('.simulation');
+      var height = parseInt($(window).height() * 0.7);
+      simulation.css('height', height);
+      canvas.attr('height', height);
+      canvas.attr('width', parseInt(board.innerWidth()));
+      $('#log .events').css('height', $(window).height() * 0.5);
+
+      viz.refresh();
+    };
+
+    $(document).ready(resizeGui);
+    $(window).resize(resizeGui);
+  </script>
+{% endblock %}

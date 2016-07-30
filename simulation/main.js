@@ -31,7 +31,7 @@ var RunSimulation = function (data) {
   var sim = new simulation.Simulation();
   for (var i = 0; i < data.players.length; ++i) {
     var player = data.players[i];
-    var ship = new model.Ship(200 * (i - 1), 50 * (i - 1), 180 * (i - 1), player.logic, player.name);
+    var ship = new model.Ship(400 * (i - 1), 100 * (i - 1), 180 * (i - 1), player.logic, player.name);
     ship.registerModule("engine", new model.EngineModule());
     ship.registerModule("weapons", new model.WeaponModule(sim));
     ship.registerModule("sensors", new model.SensorModule(sim));

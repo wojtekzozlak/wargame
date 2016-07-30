@@ -1,0 +1,30 @@
+  <div class="simulation">
+    <div class="board">
+      <canvas class="game"></canvas>
+      <div class="board-controls">
+        <div class="status"></div>
+        <input type="button" class="reset btn btn-warning" value="reset" disabled/>
+        <input type="button" class="zoom-in btn btn-success" value="+"/>
+        <input type="button" class="zoom-out btn btn-success" value="-"/>
+      </div>
+    </div>
+    <div class="side-panel">
+      <div id="controls">
+        <input type="button" value="▶" class="play btn btn-success" title="play"/>
+        <input type="button" value="||" class="pause btn btn-warning" title="pause"/>
+        <input type="button" value="■" class="stop btn btn-danger" title="stop"/>
+      </div>
+      <div id="log">
+        <div class="timer"></div>
+        <ul class="events well"></ul>
+      </div>
+      {% if players_picker %}
+        <div id="players-picker">
+          Player A: <select class="player-a form-control"></select><br/>
+          Player B: <select class="player-b form-control"></select><br/>
+          <input type="button" value="compile and run" class="compile btn btn-primary" title="play"/>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+

@@ -1,0 +1,150 @@
+.simulation {
+  display: table;
+  width: 100%;
+  overflow: auto;
+}
+.board {
+  border: solid 1px black;
+  background-color: gray;
+  display: table-cell;
+  position: relative;
+  overflow: hidden;
+}
+.board canvas {
+  width: 100%;
+  height: 100%;
+  padding: 0px;
+  margin: 0px;
+}
+.board div.board-controls {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  text-align: right;
+}
+.simulation .side-panel {
+  width: 250px;
+  border: solid 1px black;
+  display: table-cell;
+  vertical-align: top;
+  padding: 15px;
+}
+#log {
+  padding: 10px;
+}
+#log li.error {
+  color: red;
+}
+div#popups {
+  z-index: 999;
+  position: absolute;
+  top: 10%;
+  left: 10%;
+  width: 80%;
+}
+div#popups div.popup {
+  display: none; 
+  height: 40px;
+  font-size: 30px;
+  text-align: center;
+  border-radius: 20px;
+  z-index: 999;
+  margin: 10px;
+}
+div#popups div.popup.info {
+  background-color: rgba(0, 255, 0, 0.7);
+}
+div#popups div.popup.error {
+  background-color: rgba(255, 0, 0, 0.7);
+}
+
+.editor-box {
+  width: 45%;
+  display: inline-block;
+}
+.CodeMirror {
+  border: solid 1px #999;
+}
+.cm-trailingspace {
+  text-decoration: underline;
+  color: #A99;
+}
+
+div#editor div.side-panel {
+  margin-left: 20px;
+  display: inline-block;
+}
+div.ai-list {
+  display: inline-block;
+}
+div.ai-list ul {
+  list-style: none;
+  padding: 0px;
+}
+div.ai-list li.selected {
+  background-color: yellow;
+}
+div.ai-list li {
+  padding: 10px;
+  cursor: pointer;
+}
+input.new-ai {
+  display: inline-block;
+}
+div.ai-editor {
+  width: 70%;
+  float: left;
+}
+div.ai-editor div.CodeMirror.disabled {
+  background-color: #EEE;
+}
+input.ai-name, input.new-ai {
+  width: 200px;
+  margin: 5px;
+}
+select.form-control {
+  width: auto;
+}
+div#log ul.events {
+  list-style-type: square;
+  height: 100px;
+  overflow: auto;
+  padding-top: 2px;
+ padding-bottom: 2px;
+}
+
+div#top-bar {
+  border-bottom: solid 1px black;
+  padding: 3pt;
+  font-size: 12pt;
+}
+
+table.match-replay {
+  margin: 0 auto;
+}
+
+table.match-replay td {
+  padding: 5pt;
+  text-align: center;
+}
+
+table.match-replay .ai-name {
+  font-size: 15pt;
+}
+
+table.match-replay .player {
+  font-size: 12pt;
+}
+
+table.match-replay .vs {
+  font-size: 17pt;
+}
+
+table.match-replay .winner {
+  color: green;
+}
+
+table.historical-matches tr > td {
+  cursor: pointer;
+}
+

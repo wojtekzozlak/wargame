@@ -27,9 +27,24 @@ def Validate(code):
 
 
 def RunSimulation(spec):
-  p = subprocess.Popen(['nodejs', 'main.js'], cwd=MODULE_DIR,
-                       stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+  p = subprocess.Popen(['ulimit -v 1000000; timeout -s9 10s nodejs main.js'], cwd=MODULE_DIR,
+                       stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                       shell=True)
   out, err = p.communicate(input=json.dumps(spec) + "\n")
+  if p.returncode != 0:
+    if 'Killed' in err:
+      stack = 'Timeout while running match.'
+    elif 'cannot allocate' in err or 'out of memory' in err:
+      stack = 'Memory limit exceeded.'
+    else:
+      print err
+      stack = 'Something went wrong :('
+    return [{
+      'faction': 'game',
+      'type': 'OUTCOME',
+      'outcome': 'ERROR',
+      'stack': stack
+    }]
   return json.loads(out)
 
 
@@ -45,7 +60,6 @@ def ValidateAndRun(spec):
         'outcome': 'ERROR',
         'stack': 'Syntax error at line %d: %s\n<pre>%s</pre>' % (line, details, hint)
       }]
-  else:
     return RunSimulation(spec)
 
 
