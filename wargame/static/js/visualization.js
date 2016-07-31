@@ -124,6 +124,7 @@ var PlayersPicker = function(container, viz_controls) {
 };
 PlayersPicker.prototype._RunMatch = function() {
   var processing_popup = new Popup('Processing...');
+  this._compile_btn.attr('disabled', true);
   $.post({
     url: window.location + 'api/run_match',
     crossDomain: false,
@@ -134,11 +135,13 @@ PlayersPicker.prototype._RunMatch = function() {
     },
     success: $.proxy(function(response) {
       processing_popup.Destroy();
+      this._compile_btn.attr('disabled', false);
       this._viz_controls.setFrames(response.data);
       this._viz_controls.play();
     }, this)
   }).fail(function(xhr, text_status) {
     processing_popup.Destroy();
+    this._compile_btn.attr('disabled', false);
     Popup.Spawn('Error while running match :(', Popup.ERROR, 2000);
   });
 };

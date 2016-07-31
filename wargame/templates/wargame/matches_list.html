@@ -7,6 +7,7 @@
   <table class="historical-matches table table-striped table-hover">
     <tbody>
       <tr>
+			  <th>Contest</th>
         <th>AI Name</th>
         <th>Opponent's AI Name</th>
         <th>Opponent's Name</th>
@@ -20,6 +21,7 @@
 		  {% endif %}
       {% for item in items %}
         <tr onclick="window.location = '{% url 'match_replay' item.id %}'">
+					<td>{{ item.contest }}</td>
           <td>{{ item.player_ai_name}}</td>
           <td>{{ item.opponent_ai_name }}</td>
           <td>{{ item.opponent_name }}</td>

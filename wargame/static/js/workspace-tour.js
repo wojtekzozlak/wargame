@@ -20,12 +20,9 @@ function CreateTour(){
     {
       element: '#editor .ai-editor',
       title: 'Writing code',
-      content: 'Editor allows you to write the AI code (using JavaScript).<br/><br/>'
-               + 'You can find available commands and examples in manual. '
-               + 'For now can try putting there:<br/>'
-               + '<code>SetTargetSpeed(200);<br/>'
-               + 'SetTargetAngle(GetCurrentAngle() + 90);<br/>'
-               + 'Shoot();</code><br/><br/>'
+      content: 'Editor allows you to write the AI code (using JavaScript). New AIs are pre-populated '
+               + 'with sample code.<br/><br/>'
+               + 'You can find available commands and examples in <a href="/help">manual</a>. '
                + 'Note that AI must be selected in order to edit it.',
       placement: 'top',
       backdrop: true,
@@ -45,7 +42,6 @@ function CreateTour(){
       content: 'This part of your workspace is used to test your pilots.',
       placement: 'bottom',
       backdrop: true,
-      backdropPadding: 10
     },
     {
       element: '.simulation #players-picker',
@@ -81,6 +77,15 @@ function CreateTour(){
       placement: 'bottom',
       backdrop: true,
       backdropPadding: 10,
+    },
+    {
+      element: '.ai-list',
+      title: 'Selecting AI for contest',
+      content: 'In order to participate in contest with other players you must select a single AI as your representant<br/><br/>'
+               + 'To do so, click on the star near its name. Only a single AI may be selected!',
+      placement: 'left',
+      backdrop: true,
+      packdropPadding: 10,
     },
     {
       element: '.manual',

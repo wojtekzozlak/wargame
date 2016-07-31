@@ -1,5 +1,6 @@
 from django.contrib.auth import authenticate, login as auth_login, models as auth_models
 from django.contrib.auth.decorators import login_required
+from django.db import transaction
 from django.db.models import Q
 from django import forms
 from django.http import HttpResponse, JsonResponse
@@ -41,6 +42,13 @@ class RegistrationForm(forms.Form):
       self.add_error('username', 'Account with that username already exists.')
 
 
+def _shortenString(string, max_len):
+  if len(string) <= max_len:
+    return string
+  else:
+    return string[:max_len-3] + '...'
+
+
 def register(request):
   if request.method == 'POST':
     form = RegistrationForm(request.POST)
@@ -74,7 +82,8 @@ def list_ais(request):
   for ai in dataset:
     ais.append({
       'id': ai.id,
-      'name': ai.name,
+      'name': _shortenString(ai.name, 30),
+      'representant': ai.representant,
     })
   return JsonResponse(dict(data=ais))
 
@@ -103,6 +112,18 @@ def add_ai(request):
         'id': ai.id
     }
   })
+
+@login_required
+@transaction.atomic
+def mark_ai_as_representant(request):
+  ai_id = request.POST.get('id')
+  ai = get_object_or_404(models.ShipAi, id=ai_id, user=request.user)
+
+  models.ShipAi.objects.filter(user=request.user).update(representant=False)
+  ai.representant = True
+  ai.save()
+  return JsonResponse({})
+
 
 @login_required
 def delete_ai(request):
@@ -138,7 +159,7 @@ def matches_list(request):
   matching_user = Q(ai_a__user=request.user) | Q(ai_b__user=request.user)
   results_are_public = Q(contest__results_public=True)
   matches = models.Match.objects.filter(
-      matching_user & results_are_public).order_by('-date_time')
+      matching_user & results_are_public).order_by('contest', '-date_time',)
 
   items = []
   for match in matches:
@@ -151,6 +172,7 @@ def matches_list(request):
 
     item = {}
     item['id'] = match.id
+    item['contest'] = match.contest.name
     item['player_ai_name'] = player_ai.name
     item['opponent_ai_name'] = opponent_ai.name
     item['opponent_name'] = opponent_ai.user.username

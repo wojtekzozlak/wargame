@@ -210,18 +210,20 @@ WeaponModule.prototype.getProperties = function() {
   return {
     '_weapon': {
       'ammoAvailable': ammo_available,
-      'shoot': false
+      'shoot': undefined,
     },
   }
 };
 WeaponModule.prototype.loadProperties = function(env) {
-  if (env._weapon.shoot && this._ammoAvailable()) {
+  if (env._weapon.shoot != undefined && this._ammoAvailable()) {
     this._time_since_last_shot = 0;
     var ship_properties = this._ship.getProperties();
-    var offset = utils.RotateVector(0, 10, ship_properties.angle);
-    this._simulation.addObject(new Rocket(ship_properties.x + offset.x,
-                                          ship_properties.y + offset.y,
-                                          ship_properties.angle,
+    var angle = env._weapon.shoot;
+    angle = Math.min(15, Math.max(-15, angle));
+    angle = (ship_properties.angle + angle + 360) % 360;
+    this._simulation.addObject(new Rocket(ship_properties.x,
+                                          ship_properties.y,
+                                          angle,
                                           ship_properties.faction));
   }
 };

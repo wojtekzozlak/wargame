@@ -9,7 +9,10 @@
     "comment": "Returns a list of enemies. Each entry is an object with following properties:\n\n * `angle` - an absolute angle of the enemy.\n * `relativeAngle` - an angle relative of to the Player's ship.\n * `speed` - an absolute speed of the enemy.\n * `distance` - a distance between enemy and the Player's ship.\n * `type` - a type of the enemy (either `SHIP` or `ROCKET`)."
   },
   "Shoot": {
-    "comment": "Shoots a rocket (if ammo is available)."
+    "comment": "Shoots a rocket (if ammo is available). At given angle.",
+    "args": {
+      "angle": "An integer between [-15, 15]. Angle relative to the ship's current angle."
+    }
   },
   "GetAvailableAmmo": {
     "comment": "Returns a number of available rockets."

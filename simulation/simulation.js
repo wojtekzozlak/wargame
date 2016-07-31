@@ -1,4 +1,5 @@
 var utils = require('./utils.js')
+var model = require('./model.js')
 
 var Simulation = function() {
   this._objects = [];
@@ -72,8 +73,12 @@ Simulation.prototype._detectCollisions = function() {
 Simulation.prototype.factionsAlive = function() {
   var factions_alive = {};
   for (var i = 0; i < this._objects.length; ++i) {
-    var obj_faction = this._objects[i].getProperties().faction;
-    if (obj_faction != null && !this._objects[i].destroyed) {
+    var obj = this._objects[i];
+    if (obj._typeId != model.ObjectType.SHIP) {
+      continue;
+    }
+    var obj_faction = obj.getProperties().faction;
+    if (obj_faction != null && !obj.destroyed) {
       factions_alive[obj_faction] = true;
     }
   }

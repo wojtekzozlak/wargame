@@ -36,10 +36,13 @@ var Stl = function(env) {
     /* Weapon functions. */
     'Shoot': {
       'docs': {
-        'comment': 'Shoots a rocket (if ammo is available).',
+        'comment': 'Shoots a rocket (if ammo is available). At given angle.',
+        'args': {
+          'angle': 'An integer between [-15, 15]. Angle relative to the ship\'s current angle.'
+        }
       },
-      'def': function() {
-        env._weapon.shoot = true;
+      'def': function(angle) {
+        env._weapon.shoot = angle;
       }
     },
     'GetAvailableAmmo': {

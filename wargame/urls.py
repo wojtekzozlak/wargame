@@ -25,6 +25,7 @@ urlpatterns = [
     url(r'^api/list_ais', views.list_ais, name='list_ais'),
     url(r'^api/run_match', views.run_match, name='run_match'),
     url(r'^api/save_ai_logic', views.save_ai_logic, name='save_ai_logic'),
+    url(r'^api/mark_ai_as_representant', views.mark_ai_as_representant, name='mark_ai_as_representant'),
     url(r'^accounts/register', views.register, name='register'),
     url(r'^accounts/post_register', views.post_register, name='post_register'),
     url(r'^accounts/', include('django.contrib.auth.urls')),

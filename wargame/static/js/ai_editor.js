@@ -1,8 +1,16 @@
 var _AI_LIST_TEMPLATE = ' \
+  {{if noRepresentant}} \
+    <div class="alert alert-warning"> \
+      You have no representant selected! \
+    </div> \
+  {{/if}} \
   Your pilots:<br/> \
   <div class="list-group"> \
   {{for ais ~selected=selected}} \
-    <a href="#" onclick="return false;" data-id="{{:id}}" class="list-group-item {{if id == ~selected}}active{{/if}}">{{:name}}</a> \
+    <span class="list-group-item {{if id == ~selected}}active{{/if}}"> \
+      <span href="#" onclick="return false;" title="mark as representant" class="mark-as-representant" data-id="{{:id}}">{{if !representant}}☆{{else}}★{{/if}}</span> \
+      &nbsp;&nbsp; <span onclick="return false;" class="select-ai" data-id="{{:id}}">{{:name}}</span> \
+    </span>\
   {{/for}} \
   </div> \
   ';
@@ -22,6 +30,25 @@ AiList.prototype._PickAi = function(ai_id) {
   this.Render();
   this._GetLogic(ai_id);
 };
+AiList.prototype._MarkAsRepresentant = function(ai_id) {
+  var saving_popup = new Popup('saving...');
+  $.post({
+      url: window.location + 'api/mark_ai_as_representant',
+      data: {
+        id: ai_id,
+        csrfmiddlewaretoken: $.cookie('csrftoken')
+      },
+      crossDomain: false,
+      success: $.proxy(function(response) {
+        saving_popup.Destroy();
+        this.Update();
+      }, this),
+      dataType: 'json'
+  }).fail(function(xhr, text_status) {
+    saving_popup.Destroy();
+    Popup.Spawn('Unable to save changes :(', Popup.ERROR, 2000);
+  });
+};
 AiList.prototype._GetLogic = function(ai_id) {
   var loading_popup = new Popup('loading...');
   $.get({
@@ -36,13 +63,16 @@ AiList.prototype._GetLogic = function(ai_id) {
     loading_popup.Destroy();
     Popup.Spawn('Unable to load ship logic :(', Popup.ERROR, 2000);
   });
-
 };
 AiList.prototype.Render = function() {
   this._container.html(this._template.render(this._context));
   var pick_fn = $.proxy(this._PickAi, this);
-  $('a', this._container).click(function() {
+  $('span.select-ai', this._container).click(function() {
     pick_fn(this.dataset.id);
+  });
+  var mark_fn = $.proxy(this._MarkAsRepresentant, this);
+  $('span.mark-as-representant', this._container).click(function() {
+    mark_fn(this.dataset.id);
   });
 };
 AiList.prototype.Update = function() {
@@ -51,6 +81,11 @@ AiList.prototype.Update = function() {
     crossDomain: false,
     success: $.proxy(function(response) {
       var ais = response.data;
+      var no_representant = true;
+      for (var i in ais) {
+        no_representant = no_representant && (!ais[i].representant);
+      }
+      this._context.noRepresentant = no_representant;
       this._context.ais = ais;
 
       var still_selected = false;
