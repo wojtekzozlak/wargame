@@ -24,11 +24,17 @@ var AiList = function(container, pick_callback, list_change_callback) {
   };
   this._pick_callback = pick_callback;
   this._list_change_callback = list_change_callback || function() {};
+  this._dirty = false;
+};
+AiList.prototype.SetDirty = function(is_dirty) {
+  this._dirty = is_dirty;
 };
 AiList.prototype._PickAi = function(ai_id) {
-  this._context.selected = ai_id;
-  this.Render();
-  this._GetLogic(ai_id);
+  if (!this._dirty || confirm('Your unsaved changes will be lost. Do you want to continue?')) {
+    this._context.selected = ai_id;
+    this.Render();
+    this._GetLogic(ai_id);
+  }
 };
 AiList.prototype._MarkAsRepresentant = function(ai_id) {
   var saving_popup = new Popup('saving...');
@@ -237,6 +243,7 @@ AiEditor.prototype.Render = function() {
   var unchanged = (this._text_editor.isClean() &&
                    this._ai_name_input.value == this._original_data.name);
   var edit_buttons_disabled = editor_disabled || unchanged;
+  this._ai_list.SetDirty(!unchanged);
   $('input[type=button]', this._container).not('.delete').not('.add')
       .attr('disabled', edit_buttons_disabled);
 };
