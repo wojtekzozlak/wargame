@@ -107,6 +107,11 @@ def get_ai(request):
 @login_required
 def add_ai(request):
   name = request.POST.get('name')
+  if models.ShipAi.objects.filter(name=name, user=request.user).exists():
+    return JsonResponse({
+      'error': 'AI with this name already exists.'
+    }, status=400)
+
   ai = models.ShipAi()
   ai.name = name
   ai.user = request.user

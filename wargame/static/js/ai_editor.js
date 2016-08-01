@@ -108,6 +108,15 @@ AiList.prototype.Update = function() {
 AiList.prototype.GetSelected = function() {
   return this._context.selected;
 };
+AiList.prototype.AiExists = function(ai_name) {
+  for (var i in this._context.ais) {
+    var item = this._context.ais[i];
+    if (item.name == ai_name) {
+      return true;
+    }
+  }
+  return false;
+};
 
 
 var _EDITOR_SETTINGS = {
@@ -190,8 +199,10 @@ AiEditor.prototype._Add = function() {
   });
 };
 AiEditor.prototype._SetAddButtonState = function() {
-  var ai_name_empty = $('input.new-ai').get(0).value == '';
-  $('input.add').attr('disabled', ai_name_empty);
+  var ai_name = $('input.new-ai').get(0).value
+  var ai_name_empty = ai_name == '';
+  var already_exists = this._ai_list.AiExists(ai_name);
+  $('input.add').attr('disabled', ai_name_empty || already_exists);
 };
 AiEditor.prototype._Delete = function() {
   if (!window.confirm('Are you sure you want to delete ship AI? This can not be undone.')) {
