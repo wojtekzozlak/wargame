@@ -270,9 +270,8 @@ SensorModule.prototype._getEnemyShips = function() {
   for (var i = 0; i < this._simulation._objects.length; ++i) {
     var object = this._simulation._objects[i];
     var object_properties = object.getProperties();
-    if (object_properties.typeId == ObjectType.SHIP &&
-      object_properties.faction != null &&
-      object_properties.faction != this._ship._faction) {
+    if (object_properties.faction != null &&
+        object_properties.faction != this._ship._faction) {
       enemies.push(object);
     }
   }
