@@ -300,7 +300,7 @@ Visualization.prototype.renderFrame = function(frame) {
     ctx.translate(object.x, object.y);
     ctx.rotate(object.angle * Math.PI / 180);
 
-    this._renderers[object.typeId](ctx);
+    this._renderers[object.typeId](ctx, object.faction);
     ctx.restore();
 
     for (var j = 0; j < object.messages.length; ++j) {
@@ -318,15 +318,32 @@ Visualization.prototype.clearCanvas = function() {
   ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
 };
 
-var shipRenderer = function(ctx) {
-  ctx.fillStyle = '#000000';
-  ctx.beginPath();
-  ctx.moveTo(0, 15);
-  ctx.lineTo(10, -15);
-  ctx.lineTo(-10, -15);
-  ctx.closePath();
-  ctx.fill();
-}
+
+var shipRenderer = function() {
+  var factions_seen = {};
+  var factions_counter = 0;
+  var colors = ['#800000', '#0000A0'];
+
+  function getColor(faction) {
+    var faction_color = factions_seen[faction];
+    if (faction_color != undefined) {
+      return faction_color;
+    } else {
+      factions_seen[faction] = colors[factions_counter++];
+      return getColor(faction);
+    }
+  }
+
+  return function(ctx, faction) {
+    ctx.fillStyle = getColor(faction);
+    ctx.beginPath();
+    ctx.moveTo(0, 15);
+    ctx.lineTo(10, -15);
+    ctx.lineTo(-10, -15);
+    ctx.closePath();
+    ctx.fill();
+  }
+}();
 
 var rocketRenderer = function(ctx) {
   ctx.fillStyle = 'red';

@@ -148,3 +148,9 @@ table.historical-matches tr > td {
   cursor: pointer;
 }
 
+span.player-a-name {
+  color: #800000;
+}
+span.player-b-name {
+  color: #0000A0;
+}

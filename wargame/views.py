@@ -57,7 +57,12 @@ def register(request):
       new_user.username = form.cleaned_data['username']
       new_user.set_password(form.cleaned_data['password'])
       new_user.save()
-      return redirect('post_register')
+      new_user.refresh_from_db()
+      
+      user = authenticate(username=form.cleaned_data['username'],
+                          password=form.cleaned_data['password'])
+      auth_login(request, user)
+      return redirect('workspace')
   else:
     form = RegistrationForm()
 
