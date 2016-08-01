@@ -4,7 +4,7 @@ sudo apt-get update
 sudo apt-get install nodejs --assume-yes
 sudo apt-get install gcc --assume-yes
 sudo apt-get install python-dev --assume-yes
-sudo apt-get install nginx -dev --assume-yes
+sudo apt-get install nginx --assume-yes
 
 echo "Installing pip..."
 
@@ -29,6 +29,7 @@ pip install django-markdown-deux
 pip install uwsgi
 
 sudo ln -s /home/wojtekzozlak/wargame/wargame_nginx.conf /etc/nginx/sites-enabled/
+sudo rm /etc/nginx/sites-enabled/default
 touch wargame.socket
 sudo chgrp www-data wargame.socket 
 
