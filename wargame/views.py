@@ -24,7 +24,7 @@ if (init_marker == undefined) {
 
 // Shoot when possible.
 if (GetAvailableAmmo() > 0) {
-  Shoot();
+  Shoot(0);
 }
 """
 

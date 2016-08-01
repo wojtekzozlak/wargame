@@ -71,7 +71,7 @@ Flying in a circle and shooting
 
     // Initial speed is always 100.
     SetTargetAngle(GetCurrentAngle() + 90);
-    Shoot();
+    Shoot(0);
 
 Following the enemy
 -------------------
@@ -91,7 +91,7 @@ Shooting when enemy is close
     var enemies = GetEnemies();
     SetTargetAngle(GetCurrentAngle() + enemies[0].relativeAngle);
     if (enemies[0].distance < 200) {
-      Shoot();
+      Shoot(0);
     }
 
 
@@ -111,7 +111,7 @@ Persistent state between iterations
 
     // Shoot only once per 40 iterations (4 sec).
     if (counter == 0) {
-      Shoot();
+      Shoot(0);
     }
     counter++;
     counter %= 40;

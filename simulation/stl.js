@@ -42,6 +42,7 @@ var Stl = function(env) {
         }
       },
       'def': function(angle) {
+        angle = angle == undefined ? 0 : angle;
         env._weapon.shoot = angle;
       }
     },
