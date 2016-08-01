@@ -139,11 +139,11 @@ PlayersPicker.prototype._RunMatch = function() {
       this._viz_controls.setFrames(response.data);
       this._viz_controls.play();
     }, this)
-  }).fail(function(xhr, text_status) {
+  }).fail($.proxy(function(xhr, text_status) {
     processing_popup.Destroy();
     this._compile_btn.attr('disabled', false);
     Popup.Spawn('Error while running match :(', Popup.ERROR, 2000);
-  });
+  }, this));
 };
 PlayersPicker.prototype.Refresh = function() {
   $.get({
