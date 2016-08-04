@@ -28,8 +28,15 @@ def run_ranking_match(contest, ai_a, ai_b):
  
   match = models.Match()
   match.contest = contest
-  match.ai_a = ai_a
-  match.ai_b = ai_b
+
+  match.player_a = ai_a.user
+  match.logic_a = ai_a.logic
+  match.ai_name_a = ai_a.name
+
+  match.player_b = ai_b.user
+  match.logic_b = ai_b.logic
+  match.ai_name_b = ai_b.name
+
   match.course = json.dumps(match_course)
   match.outcome = _get_outcome(match_course, username_a, username_b)
   match.save()

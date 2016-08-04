@@ -26,7 +26,9 @@ var ExtendDict = function(a, b) {
 }
 
 var SanitizeTrace = function(stacktrace) {
-  return stacktrace.substr(0, stacktrace.indexOf('at Script')).trim();
+  var re = new RegExp("\\(.*/(.*?).js", "g");
+  stacktrace = stacktrace.substr(0, stacktrace.indexOf('at Script')).trim();
+  return '<pre>' + stacktrace.replace(re, '($1.js') + '</pre>';
 };
 
 var SuccessOrErrorValue = function(error_value) {

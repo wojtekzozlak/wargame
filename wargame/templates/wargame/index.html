@@ -26,6 +26,7 @@
     <div id="top-bar">
       <a href="{% url 'workspace' %}">workspace</a> | 
       <a href="{% url 'matches_list' %}">matches history</a> |
+      <a href="{% url 'challenges' %}">challanges</a> |
       <a href="{% url 'help' %}" class="manual" target="_blank">manual</a> |
       logged as: {{ request.user.username }} (<a href="{% url 'logout' %}?next=/">log out</a>)
     </div>

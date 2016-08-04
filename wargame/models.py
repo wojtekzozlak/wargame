@@ -10,7 +10,7 @@ class ShipAi(models.Model):
 
 
 class Contest(models.Model):
-  name = models.CharField(max_length=128)
+  name = models.CharField(max_length=128, unique=True)
   description = models.CharField(max_length=1024)
   results_public = models.BooleanField(default=False)
 
@@ -28,7 +28,24 @@ class Match(models.Model):
 
   contest = models.ForeignKey(Contest)
   date_time = models.DateTimeField(auto_now_add=True)
-  ai_a = models.ForeignKey(ShipAi, related_name='matches_a')
-  ai_b = models.ForeignKey(ShipAi, related_name='matches_b')
+
+  player_a = models.ForeignKey(User, related_name='matches_a')
+  logic_a = models.TextField()
+  ai_name_a = models.CharField(max_length=128)
+
+  player_b = models.ForeignKey(User, related_name='matches_b')
+  logic_b = models.TextField()
+  ai_name_b = models.CharField(max_length=128)
+
   outcome = models.CharField(max_length=16, choices=OUTCOME_CHOICES)
   course = models.TextField()
+
+
+class Challenge(models.Model):
+  date_time = models.DateTimeField(auto_now_add=True)
+  challenger = models.ForeignKey(User, related_name='challangers')
+  challenged = models.ForeignKey(User, related_name='challanged')
+
+  accepted = models.BooleanField(default=False)
+  match = models.ForeignKey(Match, null=True)
+  

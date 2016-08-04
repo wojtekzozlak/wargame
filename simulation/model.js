@@ -186,6 +186,7 @@ EngineModule.prototype._adjustAngle = function(time_delta) {
   var desired_speed_change = this._targetSpeed - this._ship._speed;
   this._ship._speed += this._throttledChange(time_delta, this._acceleration, desired_speed_change);
   this._ship._speed = Math.min(this._ship._speed, this.MAX_SHIP_SPEED);
+  this._ship._speed = Math.max(this._ship._speed, -this.MAX_SHIP_SPEED);
 };
 EngineModule.prototype._throttledChange = function(time_delta, change_speed, desired_change) {
   var max_change = change_speed * time_delta / 1000;
@@ -199,33 +200,45 @@ var WeaponModule = function(simulation) {
   ShipModule.call(this);
   this._simulation = simulation;
   this._time_since_last_shot = utils.MAX_SAFE_INTEGER;
+  this._ammo_after_last_shot = 0;
   this._reload_time = 1000;
 };
 WeaponModule.prototype = Object.create(ShipModule.prototype);
+WeaponModule.prototype.MAX_AMMO = 3;
 WeaponModule.prototype._ammoAvailable = function() {
-  return this._time_since_last_shot >= this._reload_time;
+  var available_ammo = (this._ammo_after_last_shot
+                        + Math.floor(this._time_since_last_shot / this._reload_time));
+  available_ammo = Math.min(available_ammo, this.MAX_AMMO);
+  return available_ammo;
 };
 WeaponModule.prototype.getProperties = function() {
   var ammo_available = this._ammoAvailable();
   return {
     '_weapon': {
       'ammoAvailable': ammo_available,
-      'shoot': undefined,
+      'shoot': [],
     },
   }
 };
 WeaponModule.prototype.loadProperties = function(env) {
-  if (env._weapon.shoot != undefined && this._ammoAvailable()) {
-    this._time_since_last_shot = 0;
-    var ship_properties = this._ship.getProperties();
-    var angle = env._weapon.shoot;
-    angle = Math.min(15, Math.max(-15, angle));
-    angle = (ship_properties.angle + angle + 360) % 360;
-    this._simulation.addObject(new Rocket(ship_properties.x,
-                                          ship_properties.y,
-                                          angle,
-                                          ship_properties.faction));
+  var available_ammo = this._ammoAvailable();
+  var rockets_count = Math.min(env._weapon.shoot.length, available_ammo);
+  for (var i = 0; i < rockets_count; i++) {
+    this._spawnRocket(env._weapon.shoot[i]);
   }
+  if (rockets_count > 0) {
+    this._time_since_last_shot = 0;
+    this._ammo_after_last_shot = available_ammo - rockets_count;
+  }
+};
+WeaponModule.prototype._spawnRocket = function(angle) {
+  var ship_properties = this._ship.getProperties();
+  angle = Math.min(15, Math.max(-15, angle));
+  angle = (ship_properties.angle + angle + 360) % 360;
+  this._simulation.addObject(new Rocket(ship_properties.x,
+                                        ship_properties.y,
+                                        angle,
+                                        ship_properties.faction));
 };
 WeaponModule.prototype.computeStep = function(time_delta) {
   this._time_since_last_shot += time_delta;

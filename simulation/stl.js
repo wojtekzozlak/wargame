@@ -1,3 +1,8 @@
+var checkIsNumeric = function(value) {
+  if (!isFinite(value) || isNaN(parseFloat(value))) {
+    throw new Error("'" + value + "' is not a finite number!");
+  }
+};
 
 var Stl = function(env) {
   return {
@@ -36,14 +41,16 @@ var Stl = function(env) {
     /* Weapon functions. */
     'Shoot': {
       'docs': {
-        'comment': 'Shoots a rocket (if ammo is available). At given angle.',
+        'comment': 'Shoots a rocket (if ammo is available). At given angle. It is possible to '
+                   + 'shoot multiple rockets in a single iteration.',
         'args': {
           'angle': 'An integer between [-15, 15]. Angle relative to the ship\'s current angle.'
         }
       },
       'def': function(angle) {
         angle = angle == undefined ? 0 : angle;
-        env._weapon.shoot = angle;
+        checkIsNumeric(angle);
+        env._weapon.shoot.push(angle);
       }
     },
     'GetAvailableAmmo': {
@@ -51,7 +58,7 @@ var Stl = function(env) {
         'comment': 'Returns a number of available rockets.',
       },
       'def': function() {
-        return env._weapon.ammoAvailable ? 1 : 0;
+        return env._weapon.ammoAvailable;
       }
     },
     /* Engine module. */
@@ -79,6 +86,7 @@ var Stl = function(env) {
         }
       },
       'def': function(new_speed) {
+        checkIsNumeric(new_speed);
         env._engine.targetSpeed = new_speed;
       }
     },
@@ -90,7 +98,7 @@ var Stl = function(env) {
         }
       },
       'def': function(new_angle) {
-        // Normalize the angle, so that 0 is pointing North.
+        checkIsNumeric(new_angle); 
         env._engine.targetAngle = new_angle;
       }
     }

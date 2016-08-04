@@ -31,6 +31,7 @@ def RunSimulation(spec):
                        stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                        shell=True)
   out, err = p.communicate(input=json.dumps(spec) + "\n")
+  print err
   if p.returncode != 0:
     if 'Killed' in err:
       stack = 'Timeout while running match.'

@@ -32,5 +32,7 @@ urlpatterns = [
     url(r'^help', views.help, name='help'),
     url(r'^matches_list', views.matches_list, name='matches_list'),
     url(r'^match_replay/([0-9]+)/$', views.match_replay, name='match_replay'),
+    url(r'^challenges/$', views.challenges, name='challenges'),
+    url(r'^accept_challenge/([0-9]+)/$', views.accept_challenge, name='accept_challenge'),
     url(r'^$', views.workspace, name='workspace'),
 ]

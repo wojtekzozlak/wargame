@@ -1,0 +1,5 @@
+- model: wargame.contest
+  fields:
+    name: Challenges
+    description: Contest containing all the challenges.
+    results_public: true

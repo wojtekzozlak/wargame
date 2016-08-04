@@ -1,0 +1,84 @@
+{% extends 'wargame/index.html' %}
+
+{% load staticfiles %}
+
+{% block body %}
+
+  {% if msg %}
+    <div class="alert alert-success">{{ msg }}</div>
+  {% endif %}
+  {% if error %}
+    <div class="alert alert-danger">{{ error }}</div>
+  {% endif %}
+  {% if challenge_form.challenged.errors %}
+    <div class="alert alert-danger">{{ challenge_form.challenged.errors }}</div>
+  {% endif %}
+
+  <form role="form" action="{% url 'challenges' %}" class="form-inline" style="margin: 5px; padding: 10px; border: solid 1px gray; display: inline-block;" method="POST">
+    {% csrf_token %}
+    Challange another user for a match!<br/>
+    <div class="form-group">
+      <label>{{ challenge_form.challenged.label }}:</label> {{ challenge_form.challenged }}
+    </div><br/>
+    <button type="submit" class="btn btn-success">submit</button>
+  </form>
+
+  <h2>Inbound Challanges</h2>
+  <table class="table">
+    <tr>
+      <th>Challenger</th>
+      <th>Date</th>
+      <th>Status</th>
+      <th>Action</th>
+    </tr>
+    {% if not outbound_challenges %}
+      <td colspan="3">No challenges to display.</td>
+    {% endif %}
+    {% for challenge in inbound_challenges %}
+      <tr>
+        <td>{{ challenge.challenger.username }}</td>
+        <td>{{ challenge.date_time }}</td>
+        <td>
+          {% if not challenge.match %}PENDING{% else %}ACCEPTED{% endif %}
+        </td>
+        <td>
+          {% if not challenge.match %}
+            <a href="{% url 'accept_challenge' challenge.id %}">accept</a>
+          {% else %}
+            <a href="{% url 'match_replay' challenge.match.id %}">see replay</a>
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+  <table>
+
+  <h2>Outbound Challanges</h2>
+  <table class="table">
+    <tr>
+      <th>Challenged</th>
+      <th>Date</th>
+      <th>Status</th>
+      <th>Action</th>
+    </tr>
+    {% if not outbound_challenges %}
+      <td colspan="3">No challenges to display.</td>
+    {% endif %}
+    {% for challenge in outbound_challenges %}
+      <tr>
+        <td>{{ challenge.challenged.username }}</td>
+        <td>{{ challenge.date_time }}</td>
+        <td>
+          {% if not challenge.match %}PENDING{% else %}ACCEPTED{% endif %}
+        </td>
+        <td>
+          {% if not challenge.match %}
+            -
+          {% else %}
+            <a href="{% url 'match_replay' challenge.match.id %}">see replay</a>
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+  <table>
+
+{% endblock %}
