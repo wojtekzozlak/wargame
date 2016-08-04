@@ -14,6 +14,9 @@
       "angle": "An integer between [-15, 15]. Angle relative to the ship's current angle."
     }
   },
+  "GetTimeUntilReload": {
+    "comment": "Returns time (in ms) until reload is completed (Infinity if there is already maximum number of rockets."
+  },
   "GetAvailableAmmo": {
     "comment": "Returns a number of available rockets."
   },

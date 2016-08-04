@@ -53,6 +53,15 @@ var Stl = function(env) {
         env._weapon.shoot.push(angle);
       }
     },
+    'GetTimeUntilReload': {
+      'docs': {
+        'comment': 'Returns time (in ms) until reload is completed (Infinity if there is '
+                   + 'already maximum number of rockets.'
+      },
+      'def': function() {
+        return env._weapon.timeUntilReload
+      }
+    },
     'GetAvailableAmmo': {
       'docs': {
         'comment': 'Returns a number of available rockets.',

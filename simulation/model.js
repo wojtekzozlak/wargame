@@ -213,9 +213,13 @@ WeaponModule.prototype._ammoAvailable = function() {
 };
 WeaponModule.prototype.getProperties = function() {
   var ammo_available = this._ammoAvailable();
+  var time_until_reload =
+    ammo_available == this.MAX_AMMO ? Infinity :
+        this._reload_time - (this._time_since_last_shot % this._reload_time);
   return {
     '_weapon': {
       'ammoAvailable': ammo_available,
+      'timeUntilReload': time_until_reload,
       'shoot': [],
     },
   }
