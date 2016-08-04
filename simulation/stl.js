@@ -55,7 +55,7 @@ var Stl = function(env) {
     },
     'GetTimeUntilReload': {
       'docs': {
-        'comment': 'Returns time (in ms) until reload is completed (Infinity if there is '
+        'comment': 'Returns time (in ms) until reload is completed (or -1 if there is '
                    + 'already maximum number of rockets.'
       },
       'def': function() {

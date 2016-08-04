@@ -10,10 +10,10 @@ def run_match(player_a, ai_a, player_b, ai_b, max_duration_ms):
     'maxDurationMs': max_duration_ms,
     'players': [{
       'name': player_a,
-      'logic': ai_a.logic
+      'logic': ai_a.logic + "\n"
     }, {
       'name': player_b,
-      'logic': ai_b.logic
+      'logic': ai_b.logic + "\n"
     }]
   }
   return simulation_main.ValidateAndRun(spec)
